@@ -63,15 +63,15 @@ export default function FinanceView({
           </div>
 
           <div className="flex items-center gap-2.5 self-start sm:self-auto">
-            <div className="bg-white border-2 border-black px-3 py-1.5 shadow-[2px_2px_0px_#000] rounded text-xs font-mono font-bold">
+            <div className="bg-black text-white border-2 border-black px-3 py-1.5 shadow-[2px_2px_0px_#000] rounded text-xs font-mono font-bold">
               {records.length} Transaksi
             </div>
 
             <button
               onClick={handleOpenAdd}
-              className="neo-btn neo-btn-secondary py-2 px-4 text-xs sm:text-sm flex items-center gap-1.5 shadow-[2px_2px_0px_#000]"
+              className="neo-btn bg-black text-white hover:bg-zinc-800 py-2 px-4 text-xs sm:text-sm flex items-center gap-1.5 shadow-[2px_2px_0px_rgba(0,0,0,0.4)] active:translate-y-0.5"
             >
-              <Plus className="w-4 h-4 text-black" strokeWidth={3} />
+              <Plus className="w-4 h-4 text-white" strokeWidth={3} />
               CATAT TRANSAKSI
             </button>
           </div>

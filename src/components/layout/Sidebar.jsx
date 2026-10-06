@@ -10,7 +10,9 @@ import {
   ChevronLeft,
   RefreshCw,
   Calendar,
-  X
+  X,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { formatIndonesianDate, formatRupiah } from '../../lib/utils.js';
 
@@ -30,7 +32,9 @@ export default function Sidebar({
   isCollapsed = false,
   onToggleCollapse,
   isOpenMobile = false,
-  onCloseMobile
+  onCloseMobile,
+  theme = 'light',
+  onToggleTheme
 }) {
   const navItems = [
     {
@@ -93,14 +97,14 @@ export default function Sidebar({
               <button
                 onClick={onToggleCollapse}
                 title="Buka / Perluas Sidebar"
-                className="w-11 h-11 bg-[#FFE600] hover:bg-yellow-300 active:translate-y-0.5 border-2 border-black shadow-[3px_3px_0px_#000000] hover:shadow-[4px_4px_0px_#000000] flex items-center justify-center font-heading font-extrabold text-xl tracking-tighter shrink-0 select-none transition-all rounded-[4px] cursor-pointer"
+                className="w-11 h-11 bg-[#FFE600] text-black hover:bg-yellow-300 active:translate-y-0.5 border-2 border-black shadow-[3px_3px_0px_#000000] hover:shadow-[4px_4px_0px_#000000] flex items-center justify-center font-heading font-extrabold text-xl tracking-tighter shrink-0 select-none transition-all rounded-[4px] cursor-pointer"
               >
                 FD
               </button>
             ) : (
               <>
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 bg-[#FFE600] border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center font-heading font-extrabold text-xl tracking-tighter shrink-0 select-none">
+                  <div className="w-10 h-10 bg-[#FFE600] text-black border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center font-heading font-extrabold text-xl tracking-tighter shrink-0 select-none">
                     FD
                   </div>
                   <div className="min-w-0">
@@ -206,10 +210,15 @@ export default function Sidebar({
                     className={`w-12 h-12 rounded-[4px] border-2 border-black flex items-center justify-center transition-all relative select-none ${
                       isActive
                         ? 'bg-[#FFE600] text-black shadow-[3px_3px_0px_#000000] -translate-x-0.5 -translate-y-0.5 font-bold'
-                        : 'bg-white text-zinc-800 hover:bg-[#F6F4EE] shadow-[2px_2px_0px_#000000] hover:shadow-[3px_3px_0px_#000000]'
+                        : 'bg-white dark:bg-[#1E1E24] text-zinc-800 dark:text-[#F4F4F5] hover:bg-[#F6F4EE] shadow-[2px_2px_0px_#000000] hover:shadow-[3px_3px_0px_#000000]'
                     }`}
                   >
-                    <Icon className="w-5 h-5 text-black" strokeWidth={2.5} />
+                    <Icon
+                      className={`w-5 h-5 shrink-0 ${
+                        isActive ? 'text-black' : 'text-black dark:text-[#F4F4F5]'
+                      }`}
+                      strokeWidth={2.5}
+                    />
                     {item.badge && (
                       <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#FF4B4B] border border-black rounded-full" />
                     )}
@@ -229,22 +238,37 @@ export default function Sidebar({
                   className={`w-full flex items-center justify-between p-3 border-2 border-black rounded-[4px] font-heading font-extrabold text-sm transition-all select-none text-left ${
                     isActive
                       ? 'bg-[#FFE600] text-black shadow-[4px_4px_0px_#000000] -translate-x-0.5 -translate-y-0.5'
-                      : 'bg-white text-zinc-800 hover:bg-[#F6F4EE] shadow-[2px_2px_0px_#000000] hover:shadow-[3px_3px_0px_#000000]'
+                      : 'bg-white dark:bg-[#1E1E24] text-zinc-800 dark:text-[#F4F4F5] hover:bg-[#F6F4EE] shadow-[2px_2px_0px_#000000] hover:shadow-[3px_3px_0px_#000000]'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div
                       className={`w-8 h-8 rounded-[3px] border-2 border-black flex items-center justify-center shrink-0 ${
-                        isActive ? 'bg-black text-[#FFE600]' : 'bg-[#F6F4EE] text-black'
+                        isActive
+                          ? 'bg-black text-[#FFE600]'
+                          : 'bg-[#F6F4EE] dark:bg-[#2A2A32] text-black dark:text-[#F4F4F5]'
                       }`}
                     >
-                      <Icon className="w-4 h-4" strokeWidth={2.5} />
+                      <Icon
+                        className={`w-4 h-4 shrink-0 ${
+                          isActive ? 'text-[#FFE600]' : 'text-black dark:text-[#F4F4F5]'
+                        }`}
+                        strokeWidth={2.5}
+                      />
                     </div>
                     <div className="min-w-0">
-                      <div className="truncate text-xs sm:text-sm font-extrabold tracking-wide">
+                      <div
+                        className={`truncate text-xs sm:text-sm font-extrabold tracking-wide ${
+                          isActive ? 'text-black' : 'text-zinc-900 dark:text-[#F4F4F5]'
+                        }`}
+                      >
                         {item.label}
                       </div>
-                      <div className="text-[10px] font-mono font-medium text-zinc-600 truncate">
+                      <div
+                        className={`text-[10px] font-mono font-medium truncate ${
+                          isActive ? 'text-zinc-900 font-semibold' : 'text-zinc-600 dark:text-zinc-400'
+                        }`}
+                      >
                         {item.sublabel}
                       </div>
                     </div>
@@ -303,6 +327,21 @@ export default function Sidebar({
                   className="w-10 h-10 bg-[#FFE600] border-2 border-black rounded-[4px] shadow-[2px_2px_0px_#000] flex items-center justify-center active:translate-y-0.5 transition-all"
                 >
                   <User className="w-4 h-4 text-black" strokeWidth={2.5} />
+                </button>
+              )}
+
+              {/* Theme Toggle Button (Collapsed) */}
+              {onToggleTheme && (
+                <button
+                  onClick={onToggleTheme}
+                  title={theme === 'dark' ? 'Ganti ke Tema Terang' : 'Ganti ke Tema Gelap'}
+                  className="w-10 h-10 bg-white hover:bg-zinc-100 border-2 border-black rounded-[4px] shadow-[2px_2px_0px_#000] flex items-center justify-center transition-colors active:translate-y-0.5"
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="w-4 h-4 text-[#FFE600]" strokeWidth={2.5} />
+                  ) : (
+                    <Moon className="w-4 h-4 text-black" strokeWidth={2.5} />
+                  )}
                 </button>
               )}
 
@@ -366,6 +405,31 @@ export default function Sidebar({
                   className="w-full neo-btn neo-btn-primary py-2 text-xs"
                 >
                   MASUK / DAFTAR
+                </button>
+              )}
+
+              {/* Theme Toggle Button (Expanded) */}
+              {onToggleTheme && (
+                <button
+                  onClick={onToggleTheme}
+                  title={theme === 'dark' ? 'Beralih ke Tema Terang' : 'Beralih ke Tema Gelap'}
+                  className="w-full p-2 bg-white hover:bg-zinc-100 border-2 border-black rounded-[4px] shadow-[2px_2px_0px_#000] flex items-center justify-between text-xs font-heading font-extrabold transition-all active:translate-y-0.5"
+                >
+                  <div className="flex items-center gap-2">
+                    {theme === 'dark' ? (
+                      <Sun className="w-4 h-4 text-[#FFE600]" strokeWidth={2.5} />
+                    ) : (
+                      <Moon className="w-4 h-4 text-black" strokeWidth={2.5} />
+                    )}
+                    <span>{theme === 'dark' ? 'TEMA GELAP' : 'TEMA TERANG'}</span>
+                  </div>
+                  <span
+                    className={`neo-badge text-[10px] py-0.5 px-2 ${
+                      theme === 'dark' ? 'bg-[#FFE600] text-black' : 'bg-black text-white'
+                    }`}
+                  >
+                    {theme === 'dark' ? 'DARK' : 'LIGHT'}
+                  </span>
                 </button>
               )}
 

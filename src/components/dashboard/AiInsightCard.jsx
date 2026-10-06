@@ -64,7 +64,7 @@ export default function AiInsightCard({
           <p className="text-xs font-mono font-bold text-zinc-500 uppercase mb-1">
             EVALUASI CERDAS
           </p>
-          <p className="text-sm font-body font-semibold text-black leading-relaxed">
+          <p className="text-sm font-body font-semibold text-black dark:text-[#F4F4F5] leading-relaxed">
             {insight}
           </p>
         </div>
@@ -72,7 +72,7 @@ export default function AiInsightCard({
         {/* Action Items Box */}
         {action_items && action_items.length > 0 && (
           <div className="space-y-2">
-            <p className="text-xs font-heading font-extrabold uppercase tracking-wide text-zinc-800">
+            <p className="text-xs font-heading font-extrabold uppercase tracking-wide text-zinc-800 dark:text-zinc-300">
               TINDAKAN SOLUTIF DIREKOMENDASIKAN:
             </p>
             <div className="space-y-2">
@@ -84,7 +84,7 @@ export default function AiInsightCard({
                   <div className="mt-0.5 w-4 h-4 rounded-full bg-[#FFE600] border-2 border-black flex items-center justify-center shrink-0">
                     <CheckCircle2 className="w-3 h-3 text-black" strokeWidth={3} />
                   </div>
-                  <span className="text-xs sm:text-sm font-medium text-black">
+                  <span className="text-xs sm:text-sm font-medium text-black dark:text-[#F4F4F5]">
                     {action}
                   </span>
                 </div>

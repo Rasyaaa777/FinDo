@@ -55,10 +55,282 @@
   --transition-fast: 120ms cubic-bezier(0, 0, 0.2, 1);
 }
 
+.dark {
+  --color-canvas: #121214;
+  --color-surface: #1E1E24;
+  --color-surface-subtle: #27272F;
+  --color-surface-dark: #0A0A0C;
+
+  --color-ink-primary: #F4F4F5;
+  --color-ink-secondary: #A1A1AA;
+  --color-ink-inverse: #000000;
+
+  color-scheme: dark;
+}
+
 body {
   background-color: var(--color-canvas);
   color: var(--color-ink-primary);
   font-family: var(--font-body);
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+/* Dark Mode Overrides for Neo-Brutalism */
+.dark body {
+  background-color: #121214;
+  color: #F4F4F5;
+}
+
+.dark .bg-white {
+  background-color: #1E1E24 !important;
+  color: #F4F4F5;
+}
+
+.dark .bg-\[\#FFFFFF\] {
+  background-color: #18181C !important;
+  color: #F4F4F5;
+}
+
+.dark .bg-\[\#F6F4EE\] {
+  background-color: #141416 !important;
+}
+
+.dark .bg-\[\#FAF8F3\] {
+  background-color: #222228 !important;
+}
+
+.dark .bg-\[\#EAE6DC\] {
+  background-color: #27272F !important;
+}
+
+.dark .hover\:bg-\[\#F6F4EE\]:hover {
+  background-color: #2A2A32 !important;
+}
+
+.dark .hover\:bg-\[\#FFF9CC\]:hover {
+  background-color: #2E2A1E !important;
+}
+
+.dark .hover\:bg-zinc-100:hover,
+.dark .hover\:bg-zinc-200:hover {
+  background-color: #2D2D35 !important;
+}
+
+/* Dark Mode Text Adaptations:
+   Dark text classes become light when on dark surfaces, unless specifically overridden */
+.dark .text-black {
+  color: #F4F4F5 !important;
+}
+
+.dark .text-zinc-900,
+.dark .text-zinc-800 {
+  color: #E4E4E7 !important;
+}
+
+.dark .text-zinc-700,
+.dark .text-zinc-600 {
+  color: #A1A1AA !important;
+}
+
+.dark .text-zinc-500 {
+  color: #8E8E93 !important;
+}
+
+.dark .border-black {
+  border-color: #000000 !important;
+}
+
+.dark .border-black\/20,
+.dark .border-black\/10 {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.dark .divide-black\/20 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.dark .neo-input {
+  background-color: #1A1A1E !important;
+  color: #F4F4F5 !important;
+  border-color: #000000 !important;
+}
+
+.dark .neo-btn-secondary {
+  background-color: #26262D !important;
+  color: #F4F4F5 !important;
+}
+
+.dark .neo-btn-secondary * {
+  color: #F4F4F5 !important;
+}
+
+.dark .neo-btn-secondary:hover:not(:disabled) {
+  background-color: #33333C !important;
+}
+
+/* Text white must always stay white */
+.dark .text-white,
+.dark .text-white * {
+  color: #FFFFFF !important;
+}
+
+/* Black backgrounds must always have white text */
+.dark .bg-black {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+}
+
+.dark .bg-black * {
+  color: #FFFFFF;
+}
+
+.dark .bg-black .text-white,
+.dark .bg-black .text-white * {
+  color: #FFFFFF !important;
+}
+
+/* Accent icons inside black containers */
+.dark .bg-black .text-\[\#FFE600\],
+.dark .bg-black .text-\[\#FFE600\] *,
+.dark .text-\[\#FFE600\] {
+  color: #FFE600 !important;
+}
+
+.dark .bg-black .text-\[\#00E5CC\],
+.dark .bg-black .text-\[\#00E5CC\] *,
+.dark .text-\[\#00E5CC\] {
+  color: #00E5CC !important;
+}
+
+.dark .bg-black .text-\[\#00D26A\],
+.dark .bg-black .text-\[\#00D26A\] *,
+.dark .text-\[\#00D26A\] {
+  color: #00D26A !important;
+}
+
+/* Neo-badge with bg-black must stay crisp white text */
+.dark .neo-badge.bg-black,
+.dark .neo-badge.bg-black * {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+}
+
+/* Direct text on bright surfaces must stay black for maximum readability */
+.dark .bg-\[\#FFE600\],
+.dark .neo-btn-primary,
+.dark .bg-\[\#00E5CC\],
+.dark .neo-btn-accent,
+.dark .bg-\[\#00D26A\],
+.dark .bg-\[\#FFAA00\] {
+  color: #000000 !important;
+}
+
+.dark .bg-\[\#FFE600\] h1,
+.dark .bg-\[\#FFE600\] h2,
+.dark .bg-\[\#FFE600\] h3,
+.dark .bg-\[\#FFE600\] p,
+.dark .bg-\[\#FFE600\] .text-black,
+.dark .bg-\[\#FFE600\] .text-zinc-800,
+.dark .bg-\[\#FFE600\] .text-zinc-900,
+.dark .bg-\[\#00E5CC\] h1,
+.dark .bg-\[\#00E5CC\] h2,
+.dark .bg-\[\#00E5CC\] h3,
+.dark .bg-\[\#00E5CC\] p,
+.dark .bg-\[\#00E5CC\] .text-black,
+.dark .bg-\[\#00E5CC\] .text-zinc-800,
+.dark .bg-\[\#00E5CC\] .text-zinc-900,
+.dark .neo-btn-primary *,
+.dark .neo-btn-accent * {
+  color: #000000 !important;
+}
+
+/* Protect nested black containers and white text inside bright banners */
+.dark .bg-\[\#FFE600\] .bg-black,
+.dark .bg-\[\#00E5CC\] .bg-black,
+.dark .bg-\[\#00D26A\] .bg-black {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+}
+
+.dark .bg-\[\#FFE600\] .bg-black *,
+.dark .bg-\[\#00E5CC\] .bg-black *,
+.dark .bg-\[\#00D26A\] .bg-black * {
+  color: #FFFFFF !important;
+}
+
+.dark .bg-\[\#FFE600\] .bg-black .text-\[\#FFE600\],
+.dark .bg-\[\#FFE600\] .bg-black .text-\[\#FFE600\] * {
+  color: #FFE600 !important;
+}
+
+.dark .bg-\[\#00E5CC\] .bg-black .text-\[\#00E5CC\],
+.dark .bg-\[\#00E5CC\] .bg-black .text-\[\#00E5CC\] * {
+  color: #00E5CC !important;
+}
+
+.dark .bg-\[\#FFE600\] .text-white,
+.dark .bg-\[\#FFE600\] .text-white *,
+.dark .bg-\[\#00E5CC\] .text-white,
+.dark .bg-\[\#00E5CC\] .text-white * {
+  color: #FFFFFF !important;
+}
+
+/* Badges on bright colors */
+.dark .neo-badge.bg-\[\#FFE600\],
+.dark .neo-badge.bg-\[\#FFE600\] *,
+.dark .neo-badge.bg-\[\#00E5CC\],
+.dark .neo-badge.bg-\[\#00E5CC\] *,
+.dark .neo-badge.bg-\[\#00D26A\],
+.dark .neo-badge.bg-\[\#00D26A\] *,
+.dark .neo-badge.bg-\[\#FFAA00\],
+.dark .neo-badge.bg-\[\#FFAA00\] * {
+  color: #000000 !important;
+}
+
+.dark .neo-badge.bg-\[\#FF4B4B\],
+.dark .neo-badge.bg-\[\#FF4B4B\] *,
+.dark .neo-badge.bg-\[\#FF2A85\],
+.dark .neo-badge.bg-\[\#FF2A85\] * {
+  color: #FFFFFF !important;
+}
+
+/* High contrast pastel badges in dark mode */
+.dark .bg-\[\#D4F8E8\],
+.dark .neo-badge.bg-\[\#D4F8E8\] {
+  background-color: #064E3B !important;
+  color: #34D399 !important;
+}
+.dark .bg-\[\#D4F8E8\] *,
+.dark .neo-badge.bg-\[\#D4F8E8\] * {
+  color: #34D399 !important;
+}
+
+.dark .bg-\[\#FFE4E4\],
+.dark .neo-badge.bg-\[\#FFE4E4\] {
+  background-color: #7F1D1D !important;
+  color: #FCA5A5 !important;
+}
+.dark .bg-\[\#FFE4E4\] *,
+.dark .neo-badge.bg-\[\#FFE4E4\] * {
+  color: #FCA5A5 !important;
+}
+
+.dark .bg-zinc-200 {
+  background-color: #27272A !important;
+  color: #D4D4D8 !important;
+}
+
+.dark .text-\[\#008f4c\] {
+  color: #00E676 !important;
+}
+
+.dark .text-\[\#d42b2b\] {
+  color: #FF5252 !important;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #18181C;
+  border-left: 2px solid #000000;
 }
 
 h1, h2, h3, h4, .font-heading {

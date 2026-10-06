@@ -27,10 +27,10 @@ export default function MetricCards({ cashflow }) {
         </div>
 
         <div className="mt-3 pt-3 border-t-2 border-black/20 flex items-center justify-between text-xs font-mono font-bold">
-          <span className="text-zinc-800">
+          <span className="text-zinc-900 font-bold">
             {isNetPositive ? 'Kondisi Kas Surplus' : 'Kondisi Kas Defisit'}
           </span>
-          <span className={`neo-badge ${isNetPositive ? 'bg-[#00D26A] text-black' : 'bg-[#FF4B4B] text-white'}`}>
+          <span className={`neo-badge ${isNetPositive ? 'bg-[#00D26A] text-black' : 'bg-black text-white'}`}>
             {isNetPositive ? '+ SEHAT' : '! DEFISIT'}
           </span>
         </div>

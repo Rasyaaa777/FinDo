@@ -181,7 +181,7 @@ export default function FinanceList({
                             <button
                               onClick={() => onOpenEdit(record)}
                               title="Edit Transaksi"
-                              className="p-1 hover:bg-[#FFE600] text-black border border-black transition-colors rounded-[2px] active:translate-y-0.5 shadow-[1px_1px_0px_#000]"
+                              className="p-1 bg-white dark:bg-[#2A2A32] text-black dark:text-white hover:bg-[#FFE600] hover:text-black border border-black transition-colors rounded-[2px] active:translate-y-0.5 shadow-[1px_1px_0px_#000]"
                             >
                               <Pencil className="w-3.5 h-3.5" strokeWidth={2.5} />
                             </button>
@@ -189,7 +189,7 @@ export default function FinanceList({
                           <button
                             onClick={() => onDeleteRecord(record.id)}
                             title="Hapus Transaksi"
-                            className="p-1 hover:bg-[#FF4B4B] hover:text-white text-black border border-black transition-colors rounded-[2px] active:translate-y-0.5 shadow-[1px_1px_0px_#000]"
+                            className="p-1 bg-white dark:bg-[#2A2A32] text-black dark:text-white hover:bg-[#FF4B4B] hover:text-white border border-black transition-colors rounded-[2px] active:translate-y-0.5 shadow-[1px_1px_0px_#000]"
                           >
                             <Trash2 className="w-3.5 h-3.5" strokeWidth={2.5} />
                           </button>

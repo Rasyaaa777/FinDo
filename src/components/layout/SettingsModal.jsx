@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { X, Database, Key, Sparkles, Check, AlertCircle, Copy, CheckCheck } from 'lucide-react';
+import { X, Database, Key, Sparkles, Check, AlertCircle, Copy, CheckCheck, Sun, Moon } from 'lucide-react';
 import { getSupabaseConfig, saveSupabaseConfig, resetSupabaseClient } from '../../lib/supabaseClient.js';
 import { getGeminiApiKey, saveGeminiApiKey } from '../../lib/aiService.js';
 
-export default function SettingsModal({ isOpen, onClose, onConfigUpdated }) {
+export default function SettingsModal({ isOpen, onClose, onConfigUpdated, theme = 'light', onToggleTheme }) {
   const currentConfig = getSupabaseConfig();
   const currentGeminiKey = getGeminiApiKey();
 
@@ -124,6 +124,46 @@ CREATE POLICY "Users can manage their own financial records" ON financial_record
                 <AlertCircle className="w-4 h-4 text-[#FF4B4B]" />
               )}
               {message.text}
+            </div>
+          )}
+
+          {/* Theme Preference */}
+          {onToggleTheme && (
+            <div className="p-3 bg-[#F6F4EE] border-2 border-black rounded-[4px] shadow-[2px_2px_0px_#000] flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-mono text-zinc-600 block">TEMA TAMPILAN SISTEM:</span>
+                <strong className="text-sm font-heading font-bold text-black flex items-center gap-1.5 mt-0.5">
+                  {theme === 'dark' ? (
+                    <>
+                      <Moon className="w-4 h-4 text-[#FFE600]" strokeWidth={2.5} />
+                      Mode Gelap Aktif (Dark)
+                    </>
+                  ) : (
+                    <>
+                      <Sun className="w-4 h-4 text-[#FFAA00]" strokeWidth={2.5} />
+                      Mode Terang Aktif (Light)
+                    </>
+                  )}
+                </strong>
+              </div>
+
+              <button
+                type="button"
+                onClick={onToggleTheme}
+                className="neo-btn neo-btn-secondary py-1.5 px-3 text-xs flex items-center gap-1.5"
+              >
+                {theme === 'dark' ? (
+                  <>
+                    <Sun className="w-3.5 h-3.5 text-[#FFE600]" strokeWidth={2.5} />
+                    Ganti ke Terang
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-3.5 h-3.5 text-black" strokeWidth={2.5} />
+                    Ganti ke Gelap
+                  </>
+                )}
+              </button>
             </div>
           )}
 

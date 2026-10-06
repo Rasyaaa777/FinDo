@@ -60,9 +60,9 @@ export default function TodosView({
 
           <button
             onClick={handleOpenAdd}
-            className="neo-btn neo-btn-secondary py-2 px-4 text-xs sm:text-sm self-start sm:self-auto"
+            className="neo-btn bg-black text-white hover:bg-zinc-800 py-2 px-4 text-xs sm:text-sm self-start sm:self-auto flex items-center gap-1.5 shadow-[2px_2px_0px_rgba(0,0,0,0.4)] active:translate-y-0.5"
           >
-            <Plus className="w-4 h-4 text-black" strokeWidth={3} />
+            <Plus className="w-4 h-4 text-white" strokeWidth={3} />
             + TAMBAH TUGAS
           </button>
         </div>

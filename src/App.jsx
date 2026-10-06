@@ -29,6 +29,25 @@ export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
+  // Theme State (Dark Mode / Light Mode)
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('findo_theme') || 'light';
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('findo_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('findo_theme', 'light');
+    }
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   const { isConfigured: isSupabaseConnected } = getSupabaseConfig();
 
   // Initialize User Session
@@ -223,7 +242,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F4EE] flex text-black">
+    <div className="min-h-screen bg-[#F6F4EE] dark:bg-[#121214] flex text-black dark:text-white transition-colors duration-200">
       {/* 1. SIDEBAR NAVIGATION */}
       <Sidebar
         activeView={activeView}
@@ -242,6 +261,8 @@ export default function App() {
         onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
         isOpenMobile={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
 
       {/* 2. MAIN CONTENT AREA */}
@@ -336,6 +357,8 @@ export default function App() {
         onConfigUpdated={() => {
           loadData();
         }}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
     </div>
   );

@@ -129,7 +129,7 @@ export default function TodoList({
                 <div
                   className={`font-mono text-xs sm:text-sm font-extrabold px-2.5 py-1.5 border-2 border-black rounded-[3px] shrink-0 ${
                     todo.is_completed
-                      ? 'bg-zinc-200 text-zinc-600'
+                      ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'
                       : 'bg-[#FFE600] text-black shadow-[2px_2px_0px_#000]'
                   }`}
                 >
@@ -151,8 +151,8 @@ export default function TodoList({
                     onClick={() => onToggleTodo(todo.id, !todo.is_completed)}
                     className={`text-xs sm:text-sm font-semibold cursor-pointer select-none block truncate ${
                       todo.is_completed
-                        ? 'line-through text-zinc-500 font-normal'
-                        : 'text-black font-extrabold'
+                        ? 'line-through text-zinc-500 dark:text-zinc-400 font-normal'
+                        : 'text-black dark:text-white font-extrabold'
                     }`}
                     title={todo.task_title}
                   >
@@ -166,15 +166,15 @@ export default function TodoList({
                 <button
                   onClick={() => onOpenEdit(todo)}
                   title="Edit Agenda Tugas (Buka Pop-up)"
-                  className="p-2 hover:bg-[#FFE600] border-2 border-black transition-colors rounded-[3px] active:translate-y-0.5 shadow-[1px_1px_0px_#000]"
+                  className="p-2 bg-white dark:bg-[#2A2A32] text-black dark:text-white hover:bg-[#FFE600] hover:text-black border-2 border-black transition-colors rounded-[3px] active:translate-y-0.5 shadow-[1px_1px_0px_#000]"
                 >
-                  <Edit3 className="w-3.5 h-3.5 text-black" strokeWidth={2.5} />
+                  <Edit3 className="w-3.5 h-3.5" strokeWidth={2.5} />
                 </button>
 
                 <button
                   onClick={() => onDeleteTodo(todo.id)}
                   title="Hapus Agenda Tugas"
-                  className="p-2 hover:bg-[#FF4B4B] hover:text-white border-2 border-black transition-colors rounded-[3px] active:translate-y-0.5 shadow-[1px_1px_0px_#000]"
+                  className="p-2 bg-white dark:bg-[#2A2A32] text-black dark:text-white hover:bg-[#FF4B4B] hover:text-white border-2 border-black transition-colors rounded-[3px] active:translate-y-0.5 shadow-[1px_1px_0px_#000]"
                 >
                   <Trash2 className="w-3.5 h-3.5" strokeWidth={2.5} />
                 </button>

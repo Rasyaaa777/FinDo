@@ -34,7 +34,7 @@ export default function DashboardView({
             <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-black tracking-tight">
               Selamat Datang di FinDo Ledger!
             </h1>
-            <p className="text-xs sm:text-sm font-medium text-zinc-800 mt-1 max-w-xl">
+            <p className="text-xs sm:text-sm font-semibold text-zinc-900 mt-1 max-w-xl">
               Kelola alokasi blok jam produktif dan kendalikan arus kas keuangan harian Anda secara terintegrasi dengan kecerdasan buatan Gemini AI.
             </p>
           </div>
@@ -42,16 +42,16 @@ export default function DashboardView({
           <div className="flex flex-wrap sm:flex-col gap-2 shrink-0">
             <button
               onClick={() => onNavigate('todos')}
-              className="neo-btn neo-btn-secondary py-2 px-3.5 text-xs flex items-center gap-2"
+              className="neo-btn bg-black text-white hover:bg-zinc-800 py-2 px-3.5 text-xs flex items-center gap-2 shadow-[2px_2px_0px_rgba(0,0,0,0.4)] active:translate-y-0.5"
             >
-              <Clock className="w-3.5 h-3.5" />
+              <Clock className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
               ATUR JADWAL
             </button>
             <button
               onClick={() => onNavigate('finance')}
-              className="neo-btn neo-btn-accent py-2 px-3.5 text-xs flex items-center gap-2"
+              className="neo-btn bg-[#00E5CC] text-black hover:bg-teal-300 py-2 px-3.5 text-xs flex items-center gap-2 shadow-[2px_2px_0px_rgba(0,0,0,0.4)] active:translate-y-0.5"
             >
-              <Receipt className="w-3.5 h-3.5" />
+              <Receipt className="w-3.5 h-3.5 text-black" strokeWidth={2.5} />
               CATAT KAS
             </button>
           </div>
@@ -126,7 +126,7 @@ export default function DashboardView({
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="font-mono text-xs font-bold px-1.5 py-0.5 bg-[#FFE600] border border-black shrink-0">
+                      <span className="font-mono text-xs font-bold px-1.5 py-0.5 bg-[#FFE600] text-black border border-black shrink-0">
                         {formatTime(todo.start_time)} - {formatTime(todo.end_time)}
                       </span>
                       <input
@@ -137,7 +137,7 @@ export default function DashboardView({
                       />
                       <span
                         className={`text-xs font-semibold truncate cursor-pointer ${
-                          todo.is_completed ? 'line-through text-zinc-500' : 'text-black'
+                          todo.is_completed ? 'line-through text-zinc-500 dark:text-zinc-400' : 'text-black dark:text-white'
                         }`}
                         onClick={() => onToggleTodo(todo.id, !todo.is_completed)}
                       >
@@ -204,10 +204,10 @@ export default function DashboardView({
                           {isIncome ? 'IN' : 'OUT'}
                         </span>
                         <div className="min-w-0">
-                          <span className="text-xs font-extrabold text-black block truncate">
+                          <span className="text-xs font-extrabold text-black dark:text-white block truncate">
                             {record.category}
                           </span>
-                          <span className="text-[10px] font-mono text-zinc-500">
+                          <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
                             {record.record_date}
                           </span>
                         </div>
