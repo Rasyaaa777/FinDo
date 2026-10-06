@@ -1,0 +1,264 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Surface & Canvas */
+  --color-canvas: #F6F4EE;
+  --color-surface: #FFFFFF;
+  --color-surface-subtle: #EAE6DC;
+  --color-surface-dark: #121212;
+
+  /* Ink & Stroke */
+  --color-ink-primary: #000000;
+  --color-ink-secondary: #4B4B4B;
+  --color-ink-inverse: #FFFFFF;
+
+  /* Brand Accents */
+  --color-primary: #FFE600;
+  --color-primary-hover: #FFD000;
+  --color-accent-teal: #00E5CC;
+  --color-accent-magenta: #FF2A85;
+
+  /* Semantics */
+  --color-success: #00D26A;
+  --color-success-bg: #D4F8E8;
+  --color-danger: #FF4B4B;
+  --color-danger-bg: #FFE4E4;
+  --color-warning: #FFAA00;
+  --color-warning-bg: #FFF3D6;
+  --color-info: #00B4D8;
+
+  /* Typography */
+  --font-heading: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Border & Outline */
+  --border-thick: 2px solid var(--color-ink-primary);
+  --border-heavy: 3px solid var(--color-ink-primary);
+  --border-dashed: 2px dashed var(--color-ink-primary);
+
+  /* Radius */
+  --radius-none: 0px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-full: 9999px;
+
+  /* Shadows (Neo-Brutalist Hard Offsets) */
+  --shadow-none: 0 0 0 transparent;
+  --shadow-sm: 2px 2px 0px var(--color-ink-primary);
+  --shadow-md: 4px 4px 0px var(--color-ink-primary);
+  --shadow-lg: 6px 6px 0px var(--color-ink-primary);
+
+  /* Transitions */
+  --transition-fast: 120ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink-primary);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: var(--font-heading);
+}
+
+code, .font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Neo-Brutalist Custom Utilities */
+.neo-box {
+  background-color: #FFFFFF;
+  border: 2px solid #000000;
+  box-shadow: 4px 4px 0px #000000;
+  border-radius: 6px;
+}
+
+.neo-box-sm {
+  background-color: #FFFFFF;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0px #000000;
+  border-radius: 4px;
+}
+
+.neo-box-lg {
+  background-color: #FFFFFF;
+  border: 3px solid #000000;
+  box-shadow: 6px 6px 0px #000000;
+  border-radius: 6px;
+}
+
+/* Neo-Brutalist Interactive Buttons */
+.neo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border: 2px solid #000000;
+  box-shadow: 3px 3px 0px #000000;
+  border-radius: 4px;
+  transition: transform 120ms cubic-bezier(0, 0, 0.2, 1), box-shadow 120ms cubic-bezier(0, 0, 0.2, 1), background-color 120ms;
+  cursor: pointer;
+  user-select: none;
+}
+
+.neo-btn:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px #000000;
+}
+
+.neo-btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #000000;
+}
+
+.neo-btn:disabled {
+  background-color: var(--color-surface-subtle) !important;
+  color: #888888 !important;
+  border-color: #888888 !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.neo-btn:focus-visible {
+  outline: 3px solid #000000;
+  outline-offset: 2px;
+}
+
+.neo-btn-primary {
+  background-color: var(--color-primary);
+  color: #000000;
+}
+.neo-btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
+
+.neo-btn-secondary {
+  background-color: #FFFFFF;
+  color: #000000;
+}
+.neo-btn-secondary:hover:not(:disabled) {
+  background-color: #F6F4EE;
+}
+
+.neo-btn-accent {
+  background-color: var(--color-accent-teal);
+  color: #000000;
+}
+.neo-btn-accent:hover:not(:disabled) {
+  background-color: #00cfb8;
+}
+
+.neo-btn-magenta {
+  background-color: var(--color-accent-magenta);
+  color: #FFFFFF;
+}
+.neo-btn-magenta:hover:not(:disabled) {
+  background-color: #e61d76;
+}
+
+.neo-btn-destructive {
+  background-color: var(--color-danger);
+  color: #FFFFFF;
+}
+.neo-btn-destructive:hover:not(:disabled) {
+  background-color: #e63939;
+}
+
+/* Neo-Brutalist Form Inputs */
+.neo-input {
+  width: 100%;
+  background-color: #FFFFFF;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0px #000000;
+  border-radius: 4px;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.9375rem;
+  color: #000000;
+  font-weight: 500;
+  transition: all 120ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.neo-input:focus {
+  outline: none;
+  box-shadow: 4px 4px 0px #000000;
+  transform: translate(-1px, -1px);
+}
+
+.neo-input.error {
+  border-color: var(--color-danger);
+  background-color: var(--color-danger-bg);
+}
+
+/* Checkbox */
+.neo-checkbox {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #000000;
+  border-radius: 4px;
+  background-color: #FFFFFF;
+  box-shadow: 2px 2px 0px #000000;
+  cursor: pointer;
+  display: inline-grid;
+  place-content: center;
+  transition: transform 120ms, box-shadow 120ms;
+}
+
+.neo-checkbox:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #000000;
+}
+
+.neo-checkbox:checked {
+  background-color: var(--color-success);
+}
+
+.neo-checkbox:checked::before {
+  content: "";
+  width: 6px;
+  height: 12px;
+  border: solid #000000;
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
+  margin-top: -3px;
+}
+
+/* Neo Badge */
+.neo-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid #000000;
+  border-radius: 4px;
+  box-shadow: 2px 2px 0px #000000;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #EAE6DC;
+  border-left: 2px solid #000000;
+}
+::-webkit-scrollbar-thumb {
+  background: #FFE600;
+  border: 2px solid #000000;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FFD000;
+}
