@@ -8,13 +8,11 @@ import {
   User,
   Database,
   ChevronLeft,
-  RefreshCw,
-  Calendar,
   X,
   Sun,
   Moon
 } from 'lucide-react';
-import { formatIndonesianDate, formatRupiah } from '../../lib/utils.js';
+import { formatRupiah } from '../../lib/utils.js';
 
 export default function Sidebar({
   activeView,
@@ -141,41 +139,6 @@ export default function Sidebar({
                     <X className="w-4 h-4" strokeWidth={2.5} />
                   </button>
                 </div>
-              </>
-            )}
-          </div>
-
-          {/* Current Date Badge / Refresh */}
-          <div
-            className={`border-b-2 border-black/20 bg-[#FAF8F3] transition-all ${
-              isCollapsed ? 'py-2 px-1 flex justify-center' : 'px-5 py-3 flex items-center justify-between'
-            }`}
-          >
-            {isCollapsed ? (
-              <button
-                onClick={onRefreshData}
-                title={`Perbarui Data (${formatIndonesianDate(currentDate)})`}
-                className="p-1.5 bg-white hover:bg-[#FFE600] border border-black transition-colors rounded-[3px] shadow-[1px_1px_0px_#000] active:translate-y-0.5"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 text-black ${isLoading ? 'animate-spin' : ''}`} />
-              </button>
-            ) : (
-              <>
-                <div className="flex items-center gap-2 min-w-0">
-                  <Calendar className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                  <span className="text-[11px] font-mono font-bold text-zinc-800 truncate">
-                    {formatIndonesianDate(currentDate)}
-                  </span>
-                </div>
-                {onRefreshData && (
-                  <button
-                    onClick={onRefreshData}
-                    title="Perbarui Data"
-                    className="p-1 hover:bg-[#FFE600] border border-black transition-colors rounded-[2px]"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-                  </button>
-                )}
               </>
             )}
           </div>
