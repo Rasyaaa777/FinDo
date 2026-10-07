@@ -49,6 +49,18 @@ export const formatIndonesianDate = (dateStr) => {
   });
 };
 
+// Format Date ringkas: "6 Okt 2026"
+export const formatShortDate = (dateStr) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr + 'T00:00:00');
+  if (isNaN(date.getTime())) return dateStr;
+  return date.toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
+};
+
 // Format Tanggal Hari Ini YYYY-MM-DD
 export const getTodayDateString = () => {
   const now = new Date();

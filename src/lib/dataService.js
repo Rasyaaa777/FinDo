@@ -78,12 +78,16 @@ export const DataService = {
     const supabase = getSupabase();
     if (!supabase || !userId) return [];
     const prefix = monthPrefix || new Date().toISOString().slice(0, 7);
+    const [year, month] = prefix.split('-').map(Number);
+    const lastDay = new Date(year, month, 0).getDate();
+    const lastDayStr = String(lastDay).padStart(2, '0');
+
     const { data, error } = await supabase
       .from('hourly_todos')
       .select('*')
       .eq('user_id', userId)
       .gte('target_date', `${prefix}-01`)
-      .lte('target_date', `${prefix}-31`)
+      .lte('target_date', `${prefix}-${lastDayStr}`)
       .order('target_date', { ascending: true })
       .order('start_time', { ascending: true });
 
@@ -147,13 +151,17 @@ export const DataService = {
       .from('financial_records')
       .select('*')
       .eq('user_id', userId)
+      .order('record_date', { ascending: false })
       .order('created_at', { ascending: false });
 
     if (period === 'daily' && targetDate) {
       query = query.eq('record_date', targetDate);
     } else if (period === 'monthly' && targetDate) {
       const monthPrefix = targetDate.slice(0, 7); // YYYY-MM
-      query = query.gte('record_date', `${monthPrefix}-01`).lte('record_date', `${monthPrefix}-31`);
+      const [year, month] = monthPrefix.split('-').map(Number);
+      const lastDay = new Date(year, month, 0).getDate();
+      const lastDayStr = String(lastDay).padStart(2, '0');
+      query = query.gte('record_date', `${monthPrefix}-01`).lte('record_date', `${monthPrefix}-${lastDayStr}`);
     }
 
     const { data, error } = await query;

@@ -3,12 +3,15 @@ import MetricCards from '../dashboard/MetricCards.jsx';
 import FinanceList from '../finance/FinanceList.jsx';
 import FinanceModal from '../finance/FinanceModal.jsx';
 import { Receipt, Plus } from 'lucide-react';
+import { formatIndonesianMonth, getTodayDateString } from '../../lib/utils.js';
 
 export default function FinanceView({
   records = [],
   cashflow,
-  period,
+  period = 'monthly',
   onPeriodChange,
+  selectedMonth = '',
+  onSelectMonth,
   onAddRecord,
   onDeleteRecord,
   onUpdateRecord,
@@ -16,6 +19,15 @@ export default function FinanceView({
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
+
+  const currentMonthStr = getTodayDateString().slice(0, 7);
+  const activeMonth = selectedMonth || currentMonthStr;
+  const activeMonthName = formatIndonesianMonth(activeMonth);
+
+  // Default date for modal when adding record
+  const modalDefaultDate = activeMonth === currentMonthStr
+    ? (selectedDate || getTodayDateString())
+    : `${activeMonth}-01`;
 
   const handleOpenAdd = () => {
     setEditingRecord(null);
@@ -54,10 +66,10 @@ export default function FinanceView({
             </div>
             <div>
               <h1 className="font-heading font-extrabold text-xl sm:text-2xl uppercase tracking-tight text-black">
-                CATATAN KEUANGAN & BUKU KAS
+                LAPORAN KEUANGAN & BUKU KAS
               </h1>
               <p className="text-xs font-mono text-zinc-900 font-semibold">
-                Pelacakan mutasi arus kas, klasifikasi kategori, dan kontrol defisit/surplus.
+                Periode Aktif: <span className="bg-black text-[#00E5CC] px-1.5 py-0.5 rounded font-bold">{activeMonthName.toUpperCase()}</span> &bull; Rekapitulasi mutasi dan arus kas bulanan.
               </p>
             </div>
           </div>
@@ -78,17 +90,19 @@ export default function FinanceView({
         </div>
       </div>
 
-      {/* Top Metric Cards */}
+      {/* Top Metric Cards for Selected Month */}
       <section>
-        <MetricCards cashflow={cashflow} />
+        <MetricCards cashflow={cashflow} monthLabel={activeMonthName} />
       </section>
 
-      {/* FULL WIDTH FINANCIAL LEDGER TABLE */}
+      {/* FULL WIDTH FINANCIAL LEDGER TABLE WITH MONTH SELECTOR */}
       <div>
         <FinanceList
           records={records}
           period={period}
           onPeriodChange={onPeriodChange}
+          selectedMonth={activeMonth}
+          onSelectMonth={onSelectMonth}
           onDeleteRecord={onDeleteRecord}
           onOpenAdd={handleOpenAdd}
           onOpenEdit={handleOpenEdit}
@@ -101,7 +115,7 @@ export default function FinanceView({
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleModalSubmit}
         initialData={editingRecord}
-        selectedDate={selectedDate}
+        selectedDate={modalDefaultDate}
       />
     </div>
   );

@@ -19,7 +19,8 @@ export default function App() {
   const [monthlyTodos, setMonthlyTodos] = useState([]);
   const [records, setRecords] = useState([]);
   const [monthlyRecords, setMonthlyRecords] = useState([]);
-  const [period, setPeriod] = useState('daily'); // 'daily', 'monthly', 'all'
+  const [selectedFinanceMonth, setSelectedFinanceMonth] = useState(() => getTodayDateString().slice(0, 7));
+  const [period, setPeriod] = useState('monthly'); // 'daily', 'monthly', 'all'
   const [aiInsight, setAiInsight] = useState(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -70,7 +71,7 @@ export default function App() {
     }
   }, []);
 
-  // Fetch todos & records whenever user or date or period changes
+  // Fetch todos & records whenever user or date or period or finance month changes
   const loadData = useCallback(async () => {
     if (!user) {
       setTodos([]);
@@ -82,12 +83,16 @@ export default function App() {
     }
     setIsLoadingData(true);
     try {
-      const monthPrefix = selectedDate.slice(0, 7);
+      const currentMonthPrefix = selectedDate.slice(0, 7);
+      const targetFinanceDate = period === 'monthly'
+        ? `${selectedFinanceMonth}-01`
+        : (period === 'daily' ? selectedDate : null);
+
       const [userTodos, userRecords, mTodos, mRecords] = await Promise.all([
         DataService.getTodos(user.id, selectedDate),
-        DataService.getRecords(user.id, period, selectedDate),
-        DataService.getMonthlyTodos(user.id, monthPrefix),
-        DataService.getRecords(user.id, 'monthly', selectedDate),
+        DataService.getRecords(user.id, period, targetFinanceDate),
+        DataService.getMonthlyTodos(user.id, currentMonthPrefix),
+        DataService.getRecords(user.id, 'monthly', `${selectedFinanceMonth}-01`),
       ]);
       setTodos(userTodos);
       setRecords(userRecords);
@@ -98,7 +103,7 @@ export default function App() {
     } finally {
       setIsLoadingData(false);
     }
-  }, [user, selectedDate, period]);
+  }, [user, selectedDate, period, selectedFinanceMonth]);
 
   useEffect(() => {
     loadData();
@@ -217,14 +222,11 @@ export default function App() {
       return;
     }
     try {
-      const created = await DataService.addRecord({
+      await DataService.addRecord({
         ...recordData,
         user_id: user.id,
       });
-      setRecords(prev => [created, ...prev]);
-      if (created.record_date?.startsWith(selectedDate.slice(0, 7))) {
-        setMonthlyRecords(prev => [created, ...prev]);
-      }
+      await loadData();
     } catch (err) {
       alert("Gagal menambahkan transaksi: " + err.message);
     }
@@ -234,12 +236,7 @@ export default function App() {
     try {
       const updated = await DataService.updateRecord(id, user.id, updates);
       if (updated) {
-        setRecords(prev =>
-          prev.map(r => (r.id === id ? { ...r, ...updates } : r))
-        );
-        setMonthlyRecords(prev =>
-          prev.map(r => (r.id === id ? { ...r, ...updates } : r))
-        );
+        await loadData();
       }
     } catch (err) {
       alert("Gagal memperbarui transaksi: " + err.message);
@@ -249,8 +246,7 @@ export default function App() {
   const handleDeleteRecord = async (id) => {
     try {
       await DataService.deleteRecord(id, user.id);
-      setRecords(prev => prev.filter(r => r.id !== id));
-      setMonthlyRecords(prev => prev.filter(r => r.id !== id));
+      await loadData();
     } catch (err) {
       alert("Gagal menghapus transaksi: " + err.message);
     }
@@ -367,6 +363,8 @@ export default function App() {
               cashflow={cashflow}
               period={period}
               onPeriodChange={setPeriod}
+              selectedMonth={selectedFinanceMonth}
+              onSelectMonth={setSelectedFinanceMonth}
               onAddRecord={handleAddRecord}
               onDeleteRecord={handleDeleteRecord}
               onUpdateRecord={handleUpdateRecord}

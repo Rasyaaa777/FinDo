@@ -109,7 +109,7 @@ export default function TodoList({
             className="neo-btn neo-btn-primary py-2.5 px-5 text-xs sm:text-sm inline-flex items-center gap-2"
           >
             <Plus className="w-4 h-4 text-black" strokeWidth={3} />
-            + BUAT BLOK JAM PERTAMA
+            BUAT BLOK JAM PERTAMA
           </button>
         </div>
       ) : (
