@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Lock, Mail, ArrowRight, UserPlus, LogIn, Sparkles } from 'lucide-react';
+import { X, Lock, Mail, ArrowRight, UserPlus, LogIn } from 'lucide-react';
 
 export default function AuthModal({ isOpen, onClose, onLogin, onRegister }) {
   const [mode, setMode] = useState('login'); // 'login' or 'register'
@@ -28,19 +28,6 @@ export default function AuthModal({ isOpen, onClose, onLogin, onRegister }) {
       onClose();
     } catch (err) {
       setError(err.message || 'Terjadi kesalahan saat otentikasi.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDemoLogin = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      await onLogin('demo.user@findo.app', 'demo123456');
-      onClose();
-    } catch (err) {
-      setError(err.message || 'Gagal login demo.');
     } finally {
       setLoading(false);
     }
@@ -164,22 +151,6 @@ export default function AuthModal({ isOpen, onClose, onLogin, onRegister }) {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Access */}
-          <div className="pt-3 border-t-2 border-dashed border-black text-center">
-            <p className="text-xs font-mono text-zinc-600 mb-2">
-              Ingin langsung mencoba tanpa registrasi?
-            </p>
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              disabled={loading}
-              className="w-full neo-btn neo-btn-secondary py-2 text-xs"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#FFAA00]" strokeWidth={2.5} />
-              MASUK MODE DEMO (1-KLIK)
-            </button>
-          </div>
         </div>
       </div>
     </div>

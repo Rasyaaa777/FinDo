@@ -3,10 +3,8 @@ import {
   LayoutDashboard,
   Clock,
   Receipt,
-  Settings,
   LogOut,
   User,
-  Database,
   ChevronLeft,
   X,
   Sun,
@@ -20,9 +18,7 @@ export default function Sidebar({
   user,
   todosCount = 0,
   balance = 0,
-  isSupabaseConnected,
   onOpenAuth,
-  onOpenSettings,
   onLogout,
   onRefreshData,
   isLoading,
@@ -252,7 +248,7 @@ export default function Sidebar({
           </nav>
         </div>
 
-        {/* Bottom Section: Database Mode, User Account, Settings */}
+        {/* Bottom Section: User Account & Theme */}
         <div
           className={`border-t-3 border-black bg-[#F6F4EE] transition-all ${
             isCollapsed ? 'p-2 space-y-2.5 flex flex-col items-center' : 'p-4 space-y-3'
@@ -260,20 +256,6 @@ export default function Sidebar({
         >
           {isCollapsed ? (
             <>
-              {/* Cloud/Local Icon */}
-              <button
-                onClick={onOpenSettings}
-                title={isSupabaseConnected ? 'Mode: Cloud Supabase' : 'Mode: Local Storage'}
-                className="w-10 h-10 bg-white border-2 border-black rounded-[4px] shadow-[2px_2px_0px_#000] flex items-center justify-center relative hover:bg-[#FFFDE6] active:translate-y-0.5 transition-all"
-              >
-                <Database className="w-4 h-4 text-black" strokeWidth={2.5} />
-                <span
-                  className={`absolute top-1 right-1 w-2 h-2 rounded-full border border-black ${
-                    isSupabaseConnected ? 'bg-[#00D26A]' : 'bg-[#FFAA00]'
-                  }`}
-                />
-              </button>
-
               {/* User Avatar / Login */}
               {user ? (
                 <button
@@ -307,34 +289,9 @@ export default function Sidebar({
                   )}
                 </button>
               )}
-
-              {/* Settings Gear Icon */}
-              <button
-                onClick={onOpenSettings}
-                title="Pengaturan & API"
-                className="w-10 h-10 bg-white hover:bg-zinc-100 border-2 border-black rounded-[4px] shadow-[2px_2px_0px_#000] flex items-center justify-center transition-colors active:translate-y-0.5"
-              >
-                <Settings className="w-4 h-4 text-black" strokeWidth={2.5} />
-              </button>
             </>
           ) : (
             <>
-              {/* Cloud vs Local Sync Info */}
-              <button
-                onClick={onOpenSettings}
-                className="w-full p-2 bg-white border-2 border-black rounded-[4px] shadow-[2px_2px_0px_#000] flex items-center justify-between text-xs font-mono font-bold hover:bg-[#FFFDE6] transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Database className="w-3.5 h-3.5 text-black" strokeWidth={2.5} />
-                  <span>{isSupabaseConnected ? 'CLOUD SUPABASE' : 'LOCAL MODE'}</span>
-                </div>
-                <span
-                  className={`w-2.5 h-2.5 rounded-full border border-black ${
-                    isSupabaseConnected ? 'bg-[#00D26A]' : 'bg-[#FFAA00]'
-                  }`}
-                />
-              </button>
-
               {/* User Account / Login */}
               {user ? (
                 <div className="p-2.5 bg-white border-2 border-black rounded-[4px] shadow-[2px_2px_0px_#000] space-y-2">
@@ -395,15 +352,6 @@ export default function Sidebar({
                   </span>
                 </button>
               )}
-
-              {/* Settings Trigger */}
-              <button
-                onClick={onOpenSettings}
-                className="w-full py-1.5 px-3 bg-white hover:bg-zinc-100 border-2 border-black rounded-[4px] shadow-[1px_1px_0px_#000] text-xs font-heading font-bold flex items-center justify-center gap-2 transition-all"
-              >
-                <Settings className="w-3.5 h-3.5" strokeWidth={2.5} />
-                PENGATURAN & API
-              </button>
             </>
           )}
         </div>

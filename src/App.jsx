@@ -4,13 +4,12 @@ import DashboardView from './components/views/DashboardView.jsx';
 import TodosView from './components/views/TodosView.jsx';
 import FinanceView from './components/views/FinanceView.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
-import SettingsModal from './components/layout/SettingsModal.jsx';
 
 import { DataService } from './lib/dataService.js';
-import { getSupabaseConfig, getSupabase } from './lib/supabaseClient.js';
+import { getSupabase } from './lib/supabaseClient.js';
 import { requestAiInsight } from './lib/aiService.js';
 import { calculateProgress, calculateCashflow, getTodayDateString, formatIndonesianDate } from './lib/utils.js';
-import { Menu, Calendar, Database, RefreshCw, Sparkles } from 'lucide-react';
+import { Menu, RefreshCw } from 'lucide-react';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -25,7 +24,6 @@ export default function App() {
 
   // Modals & Navigation
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -48,8 +46,6 @@ export default function App() {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  const { isConfigured: isSupabaseConnected } = getSupabaseConfig();
-
   // Initialize User Session
   useEffect(() => {
     async function initUser() {
@@ -66,9 +62,7 @@ export default function App() {
     const supabase = getSupabase();
     if (supabase) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (session?.user) {
-          setUser(session.user);
-        }
+        setUser(session?.user || null);
       });
       return () => subscription?.unsubscribe();
     }
@@ -76,7 +70,12 @@ export default function App() {
 
   // Fetch todos & records whenever user or date or period changes
   const loadData = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setTodos([]);
+      setRecords([]);
+      setIsLoadingData(false);
+      return;
+    }
     setIsLoadingData(true);
     try {
       const [userTodos, userRecords] = await Promise.all([
@@ -250,9 +249,7 @@ export default function App() {
         user={user}
         todosCount={todos.length}
         balance={cashflow.balance}
-        isSupabaseConnected={isSupabaseConnected}
         onOpenAuth={() => setIsAuthOpen(true)}
-        onOpenSettings={() => setIsSettingsOpen(true)}
         onLogout={handleLogout}
         onRefreshData={loadData}
         isLoading={isLoadingData}
@@ -348,17 +345,6 @@ export default function App() {
         onClose={() => setIsAuthOpen(false)}
         onLogin={handleLogin}
         onRegister={handleRegister}
-      />
-
-      {/* Settings / Supabase Config Modal */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        onConfigUpdated={() => {
-          loadData();
-        }}
-        theme={theme}
-        onToggleTheme={handleToggleTheme}
       />
     </div>
   );

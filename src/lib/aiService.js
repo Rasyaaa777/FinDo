@@ -2,16 +2,7 @@ import { getSupabase } from './supabaseClient.js';
 
 export const getGeminiApiKey = () => {
   const envKey = import.meta.env.VITE_GEMINI_API_KEY;
-  const localKey = localStorage.getItem('findo_gemini_api_key');
-  return (localKey && localKey.trim()) || (envKey && envKey.trim()) || '';
-};
-
-export const saveGeminiApiKey = (key) => {
-  if (key) {
-    localStorage.setItem('findo_gemini_api_key', key.trim());
-  } else {
-    localStorage.removeItem('findo_gemini_api_key');
-  }
+  return (envKey && envKey.trim()) || '';
 };
 
 /**
