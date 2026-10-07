@@ -465,6 +465,10 @@ code, .font-mono {
   transform: translate(-1px, -1px);
 }
 
+.neo-input-icon {
+  padding-left: 2.75rem !important;
+}
+
 .neo-input.error {
   border-color: var(--color-danger);
   background-color: var(--color-danger-bg);
