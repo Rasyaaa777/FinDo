@@ -69,14 +69,17 @@ export default function TodoModal({
     }
 
     setError('');
-    onSubmit({
-      id: initialData?.id,
+    const payload = {
       task_title: taskTitle.trim(),
       target_date: targetDate,
       start_time: startTime,
       end_time: endTime,
       is_completed: initialData?.is_completed || false,
-    });
+    };
+    if (initialData?.id) {
+      payload.id = initialData.id;
+    }
+    onSubmit(payload);
     onClose();
   };
 

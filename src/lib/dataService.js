@@ -1,6 +1,18 @@
 // FinDo Data Service (Supabase PostgreSQL Database)
 import { getSupabase } from './supabaseClient.js';
 
+// Helper generating standard RFC4122 v4 UUID
+const generateUUID = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
 export const DataService = {
   // ===================== AUTHENTICATION =====================
   async getInitialUser() {
@@ -103,13 +115,17 @@ export const DataService = {
     if (!supabase) {
       throw new Error("Supabase belum dikonfigurasi di file .env");
     }
+    const payload = {
+      ...todoData,
+      id: todoData.id || generateUUID(),
+    };
     const { data, error } = await supabase
       .from('hourly_todos')
-      .insert([todoData])
+      .insert([payload])
       .select();
 
     if (error) throw error;
-    return data?.[0] || todoData;
+    return data?.[0] || payload;
   },
 
   async updateTodo(id, userId, updates) {
@@ -174,13 +190,17 @@ export const DataService = {
     if (!supabase) {
       throw new Error("Supabase belum dikonfigurasi di file .env");
     }
+    const payload = {
+      ...recordData,
+      id: recordData.id || generateUUID(),
+    };
     const { data, error } = await supabase
       .from('financial_records')
-      .insert([recordData])
+      .insert([payload])
       .select();
 
     if (error) throw error;
-    return data?.[0] || recordData;
+    return data?.[0] || payload;
   },
 
   async updateRecord(id, userId, updates) {

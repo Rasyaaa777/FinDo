@@ -79,14 +79,17 @@ export default function FinanceModal({
     }
 
     setError('');
-    onSubmit({
-      id: initialData?.id,
+    const payload = {
       type,
       amount: numericAmount,
       category,
       description: description.trim() || undefined,
       record_date: recordDate || getTodayDateString(),
-    });
+    };
+    if (initialData?.id) {
+      payload.id = initialData.id;
+    }
+    onSubmit(payload);
     onClose();
   };
 
