@@ -57,3 +57,55 @@ export const getTodayDateString = () => {
   const day = String(now.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
+
+// Ambil prefix bulan YYYY-MM
+export const getMonthPrefix = (dateStr) => {
+  if (!dateStr) return getTodayDateString().slice(0, 7);
+  return dateStr.slice(0, 7);
+};
+
+// Format Bulan Indonesia: "Oktober 2026"
+export const formatIndonesianMonth = (monthPrefix) => {
+  if (!monthPrefix) return '';
+  const [year, month] = monthPrefix.split('-');
+  const date = new Date(Number(year), Number(month) - 1, 1);
+  return date.toLocaleDateString('id-ID', {
+    month: 'long',
+    year: 'numeric'
+  });
+};
+
+// Statistik Akumulasi To-Do Bulanan
+export const calculateMonthlyTodoStats = (monthlyTodos = []) => {
+  const total = monthlyTodos.length;
+  const completed = monthlyTodos.filter(t => t.is_completed).length;
+  const pending = total - completed;
+  const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+  return { total, completed, pending, percentage };
+};
+
+// Breakdown Pengeluaran per Kategori
+export const calculateCategoryBreakdown = (records = [], type = 'expense') => {
+  const filtered = records.filter(r => r.type === type);
+  const totalAmount = filtered.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+
+  const categoryMap = {};
+  filtered.forEach(r => {
+    const cat = r.category || 'Lainnya';
+    categoryMap[cat] = (categoryMap[cat] || 0) + Number(r.amount || 0);
+  });
+
+  const categories = Object.entries(categoryMap)
+    .map(([category, amount]) => ({
+      category,
+      amount,
+      percentage: totalAmount === 0 ? 0 : Math.round((amount / totalAmount) * 100)
+    }))
+    .sort((a, b) => b.amount - a.amount);
+
+  return {
+    totalAmount,
+    categories,
+    dominant: categories[0] || null
+  };
+};

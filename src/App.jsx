@@ -16,7 +16,9 @@ export default function App() {
   const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' | 'todos' | 'finance'
   const [selectedDate, setSelectedDate] = useState(getTodayDateString());
   const [todos, setTodos] = useState([]);
+  const [monthlyTodos, setMonthlyTodos] = useState([]);
   const [records, setRecords] = useState([]);
+  const [monthlyRecords, setMonthlyRecords] = useState([]);
   const [period, setPeriod] = useState('daily'); // 'daily', 'monthly', 'all'
   const [aiInsight, setAiInsight] = useState(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -73,17 +75,24 @@ export default function App() {
     if (!user) {
       setTodos([]);
       setRecords([]);
+      setMonthlyTodos([]);
+      setMonthlyRecords([]);
       setIsLoadingData(false);
       return;
     }
     setIsLoadingData(true);
     try {
-      const [userTodos, userRecords] = await Promise.all([
+      const monthPrefix = selectedDate.slice(0, 7);
+      const [userTodos, userRecords, mTodos, mRecords] = await Promise.all([
         DataService.getTodos(user.id, selectedDate),
         DataService.getRecords(user.id, period, selectedDate),
+        DataService.getMonthlyTodos(user.id, monthPrefix),
+        DataService.getRecords(user.id, 'monthly', selectedDate),
       ]);
       setTodos(userTodos);
       setRecords(userRecords);
+      setMonthlyTodos(mTodos);
+      setMonthlyRecords(mRecords);
     } catch (err) {
       console.error("Error loading data:", err);
     } finally {
@@ -97,6 +106,7 @@ export default function App() {
 
   // Derived values
   const cashflow = calculateCashflow(records);
+  const monthlyCashflow = calculateCashflow(monthlyRecords);
   const progressPercent = calculateProgress(todos);
 
   // AI Insight Trigger
@@ -142,7 +152,12 @@ export default function App() {
         ...todoData,
         user_id: user.id
       });
-      setTodos(prev => [...prev, created].sort((a, b) => a.start_time.localeCompare(b.start_time)));
+      if (created.target_date === selectedDate) {
+        setTodos(prev => [...prev, created].sort((a, b) => a.start_time.localeCompare(b.start_time)));
+      }
+      if (created.target_date?.startsWith(selectedDate.slice(0, 7))) {
+        setMonthlyTodos(prev => [...prev, created]);
+      }
     } catch (err) {
       alert("Gagal menambahkan tugas: " + err.message);
     }
@@ -152,11 +167,17 @@ export default function App() {
     setTodos(prev =>
       prev.map(t => (t.id === id ? { ...t, is_completed } : t))
     );
+    setMonthlyTodos(prev =>
+      prev.map(t => (t.id === id ? { ...t, is_completed } : t))
+    );
     try {
       await DataService.updateTodo(id, user.id, { is_completed });
     } catch (err) {
       console.error("Toggle todo error:", err);
       setTodos(prev =>
+        prev.map(t => (t.id === id ? { ...t, is_completed: !is_completed } : t))
+      );
+      setMonthlyTodos(prev =>
         prev.map(t => (t.id === id ? { ...t, is_completed: !is_completed } : t))
       );
     }
@@ -170,6 +191,9 @@ export default function App() {
           prev.map(t => (t.id === id ? { ...t, ...updates } : t))
             .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''))
         );
+        setMonthlyTodos(prev =>
+          prev.map(t => (t.id === id ? { ...t, ...updates } : t))
+        );
       }
     } catch (err) {
       alert("Gagal memperbarui tugas: " + err.message);
@@ -180,6 +204,7 @@ export default function App() {
     try {
       await DataService.deleteTodo(id, user.id);
       setTodos(prev => prev.filter(t => t.id !== id));
+      setMonthlyTodos(prev => prev.filter(t => t.id !== id));
     } catch (err) {
       alert("Gagal menghapus tugas: " + err.message);
     }
@@ -197,6 +222,9 @@ export default function App() {
         user_id: user.id,
       });
       setRecords(prev => [created, ...prev]);
+      if (created.record_date?.startsWith(selectedDate.slice(0, 7))) {
+        setMonthlyRecords(prev => [created, ...prev]);
+      }
     } catch (err) {
       alert("Gagal menambahkan transaksi: " + err.message);
     }
@@ -209,6 +237,9 @@ export default function App() {
         setRecords(prev =>
           prev.map(r => (r.id === id ? { ...r, ...updates } : r))
         );
+        setMonthlyRecords(prev =>
+          prev.map(r => (r.id === id ? { ...r, ...updates } : r))
+        );
       }
     } catch (err) {
       alert("Gagal memperbarui transaksi: " + err.message);
@@ -219,6 +250,7 @@ export default function App() {
     try {
       await DataService.deleteRecord(id, user.id);
       setRecords(prev => prev.filter(r => r.id !== id));
+      setMonthlyRecords(prev => prev.filter(r => r.id !== id));
     } catch (err) {
       alert("Gagal menghapus transaksi: " + err.message);
     }
@@ -302,13 +334,18 @@ export default function App() {
           {activeView === 'dashboard' && (
             <DashboardView
               todos={todos}
+              monthlyTodos={monthlyTodos}
               records={records}
+              monthlyRecords={monthlyRecords}
               cashflow={cashflow}
+              monthlyCashflow={monthlyCashflow}
+              selectedDate={selectedDate}
               aiInsight={aiInsight}
               onAnalyzeAi={handleAnalyzeAi}
               isAiLoading={isAiLoading}
               onNavigate={setActiveView}
               onToggleTodo={handleToggleTodo}
+              onAddTodo={handleAddTodo}
             />
           )}
 

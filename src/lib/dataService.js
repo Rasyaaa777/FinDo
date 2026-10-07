@@ -74,6 +74,26 @@ export const DataService = {
     return data || [];
   },
 
+  async getMonthlyTodos(userId, monthPrefix) {
+    const supabase = getSupabase();
+    if (!supabase || !userId) return [];
+    const prefix = monthPrefix || new Date().toISOString().slice(0, 7);
+    const { data, error } = await supabase
+      .from('hourly_todos')
+      .select('*')
+      .eq('user_id', userId)
+      .gte('target_date', `${prefix}-01`)
+      .lte('target_date', `${prefix}-31`)
+      .order('target_date', { ascending: true })
+      .order('start_time', { ascending: true });
+
+    if (error) {
+      console.warn("getMonthlyTodos error:", error);
+      return [];
+    }
+    return data || [];
+  },
+
   async addTodo(todoData) {
     const supabase = getSupabase();
     if (!supabase) {
