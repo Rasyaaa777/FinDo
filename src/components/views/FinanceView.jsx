@@ -57,39 +57,6 @@ export default function FinanceView({
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-150">
-      {/* Header Banner */}
-      <div className="bg-[#00E5CC] border-3 border-black shadow-[4px_4px_0px_#000000] p-5 rounded-[6px]">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-black text-[#00E5CC] border-2 border-black flex items-center justify-center rounded-[4px] shadow-[2px_2px_0px_rgba(0,0,0,0.2)]">
-              <Receipt className="w-5 h-5 text-[#00E5CC]" strokeWidth={2.5} />
-            </div>
-            <div>
-              <h1 className="font-heading font-extrabold text-xl sm:text-2xl uppercase tracking-tight text-black">
-                LAPORAN KEUANGAN & BUKU KAS
-              </h1>
-              <p className="text-xs font-mono text-zinc-900 font-semibold">
-                Periode Aktif: <span className="bg-black text-[#00E5CC] px-1.5 py-0.5 rounded font-bold">{activeMonthName.toUpperCase()}</span> &bull; Rekapitulasi mutasi dan arus kas bulanan.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5 self-start sm:self-auto">
-            <div className="bg-black text-white border-2 border-black px-3 py-1.5 shadow-[2px_2px_0px_#000] rounded text-xs font-mono font-bold">
-              {records.length} Transaksi
-            </div>
-
-            <button
-              onClick={handleOpenAdd}
-              className="neo-btn bg-black text-white hover:bg-zinc-800 py-2 px-4 text-xs sm:text-sm flex items-center gap-1.5 shadow-[2px_2px_0px_rgba(0,0,0,0.4)] active:translate-y-0.5"
-            >
-              <Plus className="w-4 h-4 text-white" strokeWidth={3} />
-              CATAT TRANSAKSI
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Top Metric Cards for Selected Month */}
       <section>
         <MetricCards cashflow={cashflow} monthLabel={activeMonthName} />

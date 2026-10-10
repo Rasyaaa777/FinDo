@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Moon, BedDouble, Plus, Sparkles, TrendingUp, AlertTriangle, ShieldCheck, Info, ArrowRight } from 'lucide-react';
-import { calculateMonthlySleepStats, formatShortDate } from '../../lib/utils.js';
+import { calculateMonthlySleepStats, formatShortDate, getSessionColorConfig } from '../../lib/utils.js';
 
 export default function MonthlySleepCard({
   monthlySleepRecords = [],
@@ -107,29 +107,85 @@ export default function MonthlySleepCard({
         </div>
 
         {/* Monthly Bar Chart Container */}
+        {/* Monthly Bar Chart Container */}
         <div className="mt-4 p-4 bg-[#F6F4EE] dark:bg-[#151518] border-2 border-black rounded-[6px] shadow-[3px_3px_0px_#000]">
-          <div className="flex items-center justify-between mb-3 text-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2 text-xs">
             <span className="font-heading font-extrabold uppercase text-black dark:text-white flex items-center gap-1.5">
               <span>GRAFIK HARIAN (1 - {stats.daysInMonth})</span>
             </span>
 
-            {/* Legend */}
-            <div className="flex items-center gap-2 text-[10px] font-mono font-bold">
+            {/* Legend: Multi-Session & Ideal */}
+            <div className="flex items-center gap-2 flex-wrap text-[10px] font-mono font-bold">
               <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 bg-[#00D26A] border border-black rounded-sm inline-block" /> 7-9h
+                <span className="w-2.5 h-2.5 bg-[#8338EC] border border-black rounded-sm inline-block" /> 🌙 Malam
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 bg-[#FFE600] border border-black rounded-sm inline-block" /> 6-7h
+                <span className="w-2.5 h-2.5 bg-[#FFE600] border border-black rounded-sm inline-block" /> ☀️ Siang
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 bg-[#FF4B4B] border border-black rounded-sm inline-block" /> &lt;6h
+                <span className="w-2.5 h-2.5 bg-[#00E5CC] border border-black rounded-sm inline-block" /> ⚡ Nap
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 bg-[#00D26A] border border-black rounded-sm inline-block" /> ☕ Pagi
+              </span>
+              <span className="text-zinc-400">|</span>
+              <span className="text-[#00A855] flex items-center gap-1">
+                <span className="w-3 border-b-2 border-dashed border-[#00A855] inline-block" /> Ideal 7.5h
               </span>
             </div>
           </div>
 
+          {/* Live Inspector Bar on Hover */}
+          <div className="min-h-[36px] px-3 py-1.5 mb-2 bg-white dark:bg-[#1E1E24] border-2 border-black rounded-[4px] shadow-[2px_2px_0px_#000] flex flex-wrap items-center justify-between gap-2 text-xs font-mono transition-all">
+            {hoveredDay && hoveredDay.hasData ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-heading font-extrabold bg-[#FFE600] text-black px-1.5 py-0.5 rounded border border-black text-[11px] shadow-[1px_1px_0px_#000]">
+                  📅 {formatShortDate(hoveredDay.date)}
+                </span>
+                <span className="font-heading font-extrabold text-[#8338EC] dark:text-[#A78BFA] text-sm">
+                  {hoveredDay.duration} Jam Total
+                </span>
+                {hoveredDay.sessions && hoveredDay.sessions.length > 0 ? (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {hoveredDay.sessions.map((sess, idx) => {
+                      const cfg = getSessionColorConfig(sess, idx);
+                      return (
+                        <span
+                          key={idx}
+                          className={`neo-badge text-[10px] py-0.5 px-2 font-bold ${cfg.bg} ${cfg.text} border border-black shadow-[1px_1px_0px_#000]`}
+                        >
+                          {cfg.icon} {sess.name || `Sesi ${idx + 1}`}: {sess.startTime?.slice(0, 5)} - {sess.endTime?.slice(0, 5)} ({sess.duration}h)
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <span className="text-zinc-500 font-bold">
+                    {hoveredDay.bedtime && hoveredDay.wake_time ? `${hoveredDay.bedtime.slice(0, 5)} - ${hoveredDay.wake_time?.slice(0, 5)}` : 'Input Cepat'}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-zinc-500 text-[11px]">
+                <span className="text-[#8338EC]">💡</span>
+                <span>
+                  {hoveredDay
+                    ? `${formatShortDate(hoveredDay.date)}: Belum ada catatan tidur`
+                    : 'Arahkan kursor ke batang grafik untuk melihat rincian warna sesi siang & malam'}
+                </span>
+              </div>
+            )}
+
+            {hoveredDay?.hasData && (
+              <span className="neo-badge text-[10px] py-0.5 px-2 bg-black text-[#00E5CC] font-bold border border-black shadow-[1px_1px_0px_#000]">
+                {hoveredDay.quality || 'Baik'}
+              </span>
+            )}
+          </div>
+
           {/* Bars wrapper */}
           <div className="relative pt-6 pb-2">
-            {/* Ideal Guide Line (7-8 hours) */}
+            {/* Ideal Guide Line (7.5 hours) */}
             <div
               className="absolute left-0 right-0 border-b-2 border-dashed border-[#00A855]/60 z-0 pointer-events-none"
               style={{ bottom: `${(7.5 / maxChartHour) * 100}%` }}
@@ -140,13 +196,24 @@ export default function MonthlySleepCard({
             </div>
 
             {/* Bars Grid */}
-            <div className="flex items-end gap-1 sm:gap-1.5 h-36 relative z-10 overflow-x-auto no-scrollbar pb-1">
+            <div className="flex items-end gap-1 sm:gap-1.5 h-40 relative z-10 overflow-x-auto no-scrollbar pb-1">
               {chartDays.map((d) => {
                 const heightPercent = d.duration > 0
                   ? Math.min(Math.round((d.duration / maxChartHour) * 100), 100)
                   : 4;
 
                 const isHovered = hoveredDay?.day === d.day;
+
+                // Sort sesi agar malam di paling bawah dan siang/nap di atasnya
+                const sortedSessions = Array.isArray(d.sessions) && d.sessions.length > 0
+                  ? [...d.sessions].sort((a, b) => {
+                      const isANight = (a.name || '').toLowerCase().includes('malam') || (a.startTime >= '20:00' || a.startTime < '06:00');
+                      const isBNight = (b.name || '').toLowerCase().includes('malam') || (b.startTime >= '20:00' || b.startTime < '06:00');
+                      if (isANight && !isBNight) return -1;
+                      if (!isANight && isBNight) return 1;
+                      return (a.startTime || '').localeCompare(b.startTime || '');
+                    })
+                  : [];
 
                 return (
                   <div
@@ -162,52 +229,56 @@ export default function MonthlySleepCard({
                       }
                     }}
                   >
-                    {/* Tooltip on Hover */}
-                    {isHovered && (
-                      <div className="absolute -top-20 z-30 bg-black text-white p-2.5 rounded text-[10px] font-mono whitespace-nowrap shadow-[3px_3px_0px_#FFE600] border border-white pointer-events-none">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="font-bold text-[#FFE600]">{formatShortDate(d.date)}</p>
-                          {d.sessions && d.sessions.length > 1 && (
-                            <span className="neo-badge bg-[#8338EC] text-white text-[9px] py-0 px-1 font-bold">
-                              {d.sessions.length} SESI
-                            </span>
-                          )}
-                        </div>
-                        {d.hasData ? (
-                          <div className="mt-0.5 space-y-0.5">
-                            <p className="font-bold text-white">
-                              {d.duration} Jam ({d.quality || 'Baik'})
-                            </p>
-                            {d.sessions && d.sessions.length > 0 ? (
-                              <div className="text-zinc-300">
-                                {d.sessions.map((s, idx) => (
-                                  <p key={idx} className="text-[9px]">
-                                    • {s.name || `Sesi ${idx + 1}`}: {s.startTime?.slice(0, 5)} - {s.endTime?.slice(0, 5)} ({s.duration}h)
-                                  </p>
-                                ))}
-                              </div>
-                            ) : d.bedtime && d.wake_time ? (
-                              <p className="text-zinc-300 text-[9px]">
-                                • {d.bedtime?.slice(0, 5)} - {d.wake_time?.slice(0, 5)}
-                              </p>
-                            ) : null}
-                          </div>
-                        ) : (
-                          <p className="text-zinc-400 mt-0.5">Belum ada data</p>
+                    {/* Inline Hover Value Indicator (Above Bar) */}
+                    {isHovered && d.duration > 0 && (
+                      <div className="absolute bottom-[calc(100%-8px)] mb-1 flex flex-col items-center pointer-events-none z-30">
+                        {sortedSessions.length > 1 && (
+                          <span className="text-[8px] font-mono font-extrabold bg-[#8338EC] text-white px-1 py-0 rounded border border-black shadow-[1px_1px_0px_#000] whitespace-nowrap mb-0.5">
+                            {sortedSessions.length}S
+                          </span>
                         )}
+                        <span className="text-[9px] font-mono font-extrabold text-black dark:text-white bg-[#FFE600] px-1 py-0 rounded border border-black shadow-[1px_1px_0px_#000] whitespace-nowrap">
+                          {d.duration}h
+                        </span>
                       </div>
                     )}
 
-                    {/* The Bar */}
-                    <div
-                      className={`w-full rounded-t-[2px] border-t-2 border-x-2 transition-all duration-150 ${getBarColor(d.duration)} ${
-                        isHovered ? 'scale-y-105 shadow-[2px_0px_0px_#000]' : ''
-                      }`}
-                      style={{ height: `${heightPercent}%` }}
-                    />
+                    {/* The Stacked Bar (Berbeda Warna per Sesi) */}
+                    {d.duration > 0 ? (
+                      <div
+                        className={`w-full flex flex-col-reverse justify-start rounded-t-[3px] border-t-2 border-x-2 border-black overflow-hidden transition-all duration-150 shadow-[1px_1px_0px_#000] ${
+                          isHovered ? 'ring-2 ring-[#FFE600] scale-y-105 shadow-[2px_2px_0px_#000]' : ''
+                        }`}
+                        style={{ height: `${heightPercent}%` }}
+                      >
+                        {sortedSessions.length > 0 ? (
+                          sortedSessions.map((sess, sIdx, arr) => {
+                            const cfg = getSessionColorConfig(sess, sIdx);
+                            return (
+                              <div
+                                key={sIdx}
+                                className={`w-full ${cfg.bg} ${sIdx < arr.length - 1 ? 'border-t-2 border-black' : ''}`}
+                                style={{ flex: `${sess.duration || 1} 1 0%`, minHeight: '5px' }}
+                                title={`${sess.name}: ${sess.startTime}-${sess.endTime} (${sess.duration}h)`}
+                              />
+                            );
+                          })
+                        ) : (
+                          <div className={`w-full h-full ${getBarColor(d.duration)}`} />
+                        )}
+                      </div>
+                    ) : (
+                      <div className="w-full h-1 bg-zinc-200/50 dark:bg-zinc-700/50 border border-dashed border-zinc-400 dark:border-zinc-600 rounded-sm" />
+                    )}
 
                     {/* Day label */}
-                    <span className="text-[8px] sm:text-[9px] font-mono font-bold text-zinc-500 mt-1 select-none">
+                    <span
+                      className={`text-[8px] sm:text-[9px] font-mono font-bold mt-1 select-none transition-colors ${
+                        isHovered
+                          ? 'bg-[#FFE600] text-black px-1 rounded-sm shadow-[1px_1px_0px_#000]'
+                          : 'text-zinc-500'
+                      }`}
+                    >
                       {d.day}
                     </span>
                   </div>

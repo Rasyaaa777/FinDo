@@ -155,6 +155,70 @@ export const formatSessionListText = (sessions = []) => {
     .join(' • ');
 };
 
+// Konfigurasi warna, border, dan icon per sesi tidur (Malam = Ungu, Siang = Kuning, Nap = Tosca, Pagi = Hijau)
+export const getSessionColorConfig = (session, index = 0) => {
+  const name = (session?.name || '').toLowerCase();
+  const start = session?.startTime || '';
+  const [startH] = start.split(':').map(Number);
+
+  // 1. Tidur Malam / Night Sleep (Malam / Dini Hari)
+  if (name.includes('malam') || name.includes('night') || (!isNaN(startH) && (startH >= 20 || startH < 6))) {
+    return {
+      bg: 'bg-[#8338EC]',
+      border: 'border-[#5b1cb3]',
+      text: 'text-white',
+      hex: '#8338EC',
+      label: 'Tidur Malam',
+      icon: '🌙'
+    };
+  }
+
+  // 2. Tidur Siang / Afternoon Nap (11:00 - 16:00)
+  if (name.includes('siang') || name.includes('afternoon') || (!isNaN(startH) && startH >= 11 && startH < 16)) {
+    return {
+      bg: 'bg-[#FFE600]',
+      border: 'border-[#cca700]',
+      text: 'text-black',
+      hex: '#FFE600',
+      label: 'Tidur Siang',
+      icon: '☀️'
+    };
+  }
+
+  // 3. Power Nap / Sore (16:00 - 20:00)
+  if (name.includes('power') || name.includes('sore') || (!isNaN(startH) && startH >= 16 && startH < 20)) {
+    return {
+      bg: 'bg-[#00E5CC]',
+      border: 'border-[#00b39f]',
+      text: 'text-black',
+      hex: '#00E5CC',
+      label: 'Power Nap / Sore',
+      icon: '⚡'
+    };
+  }
+
+  // 4. Istirahat Pagi (06:00 - 11:00)
+  if (name.includes('pagi') || (!isNaN(startH) && startH >= 6 && startH < 11)) {
+    return {
+      bg: 'bg-[#00D26A]',
+      border: 'border-[#009e4f]',
+      text: 'text-black',
+      hex: '#00D26A',
+      label: 'Istirahat Pagi',
+      icon: '☕'
+    };
+  }
+
+  // 5. Fallback presets
+  const presets = [
+    { bg: 'bg-[#8338EC]', border: 'border-[#5b1cb3]', text: 'text-white', hex: '#8338EC', label: 'Tidur Malam', icon: '🌙' },
+    { bg: 'bg-[#FFE600]', border: 'border-[#cca700]', text: 'text-black', hex: '#FFE600', label: 'Tidur Siang', icon: '☀️' },
+    { bg: 'bg-[#00E5CC]', border: 'border-[#00b39f]', text: 'text-black', hex: '#00E5CC', label: 'Power Nap', icon: '⚡' },
+    { bg: 'bg-[#FF2A85]', border: 'border-[#d41865]', text: 'text-white', hex: '#FF2A85', label: 'Sesi Lain', icon: '💤' }
+  ];
+  return presets[index % presets.length];
+};
+
 // Parse catatan tidur (mengekstrak multi-sesi jika tersimpan dalam notes metadata)
 export const parseSleepRecord = (record) => {
   if (!record) return { sessions: [], cleanNotes: '', totalHours: 0 };

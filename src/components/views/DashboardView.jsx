@@ -105,54 +105,7 @@ export default function DashboardView({
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-150">
-      {/* 1. Header Hero Banner */}
-      <div className="bg-[#FFE600] border-3 border-black shadow-[6px_6px_0px_#000000] p-5 sm:p-6 rounded-[6px] relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="max-w-2xl">
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="neo-badge bg-black text-white text-[10px] tracking-wide">
-                DASHBOARD OVERVIEW
-              </span>
-              <span className="neo-badge bg-[#00E5CC] text-black text-[10px] font-bold">
-                📅 {monthName.toUpperCase()}
-              </span>
-            </div>
-            <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-black tracking-tight leading-tight">
-              Pusat Kontrol Finansial, Produktivitas & Kesehatan
-            </h1>
-            <p className="text-xs sm:text-sm font-semibold text-zinc-900 mt-1.5 leading-relaxed">
-              Pantau akumulasi to-do, arus kas, pola istirahat jam tidur Anda, dan konsultasikan keputusan dengan FinDo AI Advisor.
-            </p>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="flex flex-wrap sm:flex-nowrap gap-2.5 shrink-0">
-            <button
-              onClick={() => onNavigate('todos')}
-              className="neo-btn bg-black text-white hover:bg-zinc-800 py-2.5 px-3.5 text-xs flex items-center gap-2 shadow-[3px_3px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5"
-            >
-              <Clock className="w-4 h-4 text-white" strokeWidth={2.5} />
-              ATUR JADWAL
-            </button>
-            <button
-              onClick={() => onNavigate('finance')}
-              className="neo-btn bg-[#00E5CC] text-black hover:bg-teal-300 py-2.5 px-3.5 text-xs flex items-center gap-2 shadow-[3px_3px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5"
-            >
-              <Receipt className="w-4 h-4 text-black" strokeWidth={2.5} />
-              CATAT MUTASI KAS
-            </button>
-            <button
-              onClick={() => onNavigate('sleep')}
-              className="neo-btn bg-[#8338EC] text-white hover:bg-[#6c2bd9] py-2.5 px-3.5 text-xs flex items-center gap-2 shadow-[3px_3px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5"
-            >
-              <Moon className="w-4 h-4 text-white" strokeWidth={2.5} />
-              PANTAU JAM TIDUR
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. SECTION 1: AKUMULASI BULANAN (To-Do Bulanan + Laporan Keuangan Bulanan + Jam Tidur) */}
+      {/* 1. SECTION 1: AKUMULASI BULANAN (To-Do Bulanan + Laporan Keuangan Bulanan + Jam Tidur) */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-heading font-extrabold text-base sm:text-lg uppercase tracking-tight text-black dark:text-white flex items-center gap-2">
