@@ -3,23 +3,26 @@ import Sidebar from './components/layout/Sidebar.jsx';
 import DashboardView from './components/views/DashboardView.jsx';
 import TodosView from './components/views/TodosView.jsx';
 import FinanceView from './components/views/FinanceView.jsx';
+import SleepView from './components/views/SleepView.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 
 import { DataService } from './lib/dataService.js';
 import { getSupabase } from './lib/supabaseClient.js';
 import { requestAiInsight } from './lib/aiService.js';
-import { calculateProgress, calculateCashflow, getTodayDateString, formatIndonesianDate } from './lib/utils.js';
+import { calculateProgress, calculateCashflow, getTodayDateString, formatIndonesianDate, calculateMonthlySleepStats } from './lib/utils.js';
 import { Menu, RefreshCw } from 'lucide-react';
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' | 'todos' | 'finance'
+  const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' | 'todos' | 'finance' | 'sleep'
   const [selectedDate, setSelectedDate] = useState(getTodayDateString());
   const [todos, setTodos] = useState([]);
   const [monthlyTodos, setMonthlyTodos] = useState([]);
   const [records, setRecords] = useState([]);
   const [monthlyRecords, setMonthlyRecords] = useState([]);
+  const [monthlySleepRecords, setMonthlySleepRecords] = useState([]);
   const [selectedFinanceMonth, setSelectedFinanceMonth] = useState(() => getTodayDateString().slice(0, 7));
+  const [selectedSleepMonth, setSelectedSleepMonth] = useState(() => getTodayDateString().slice(0, 7));
   const [period, setPeriod] = useState('monthly'); // 'daily', 'monthly', 'all'
   const [aiInsight, setAiInsight] = useState(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -78,6 +81,7 @@ export default function App() {
       setRecords([]);
       setMonthlyTodos([]);
       setMonthlyRecords([]);
+      setMonthlySleepRecords([]);
       setIsLoadingData(false);
       return;
     }
@@ -87,23 +91,26 @@ export default function App() {
       const targetFinanceDate = period === 'monthly'
         ? `${selectedFinanceMonth}-01`
         : (period === 'daily' ? selectedDate : null);
+      const targetSleepMonth = selectedSleepMonth || currentMonthPrefix;
 
-      const [userTodos, userRecords, mTodos, mRecords] = await Promise.all([
+      const [userTodos, userRecords, mTodos, mRecords, mSleep] = await Promise.all([
         DataService.getTodos(user.id, selectedDate),
         DataService.getRecords(user.id, period, targetFinanceDate),
         DataService.getMonthlyTodos(user.id, currentMonthPrefix),
         DataService.getRecords(user.id, 'monthly', `${selectedFinanceMonth}-01`),
+        DataService.getMonthlySleepRecords(user.id, targetSleepMonth),
       ]);
       setTodos(userTodos);
       setRecords(userRecords);
       setMonthlyTodos(mTodos);
       setMonthlyRecords(mRecords);
+      setMonthlySleepRecords(mSleep || []);
     } catch (err) {
       console.error("Error loading data:", err);
     } finally {
       setIsLoadingData(false);
     }
-  }, [user, selectedDate, period, selectedFinanceMonth]);
+  }, [user, selectedDate, period, selectedFinanceMonth, selectedSleepMonth]);
 
   useEffect(() => {
     loadData();
@@ -118,6 +125,9 @@ export default function App() {
   const handleAnalyzeAi = async () => {
     setIsAiLoading(true);
     try {
+      const sleepStats = calculateMonthlySleepStats(monthlySleepRecords, selectedDate.slice(0, 7));
+      const todaySleep = monthlySleepRecords.find(r => r.record_date === selectedDate);
+
       const summaryPayload = {
         date: selectedDate,
         totalTasks: todos.length,
@@ -129,6 +139,11 @@ export default function App() {
           completed: t.is_completed
         })),
         cashflow,
+        sleep: {
+          averageHours: sleepStats.averageHours,
+          status: sleepStats.status,
+          todayHours: todaySleep?.duration_hours || null
+        },
         recentTransactions: records.slice(0, 10).map(r => ({
           type: r.type,
           amount: r.amount,
@@ -252,6 +267,70 @@ export default function App() {
     }
   };
 
+  // Sleep Handlers
+  const handleSaveSleep = async (sleepData) => {
+    if (!user) {
+      setIsAuthOpen(true);
+      return;
+    }
+    try {
+      await DataService.addSleepRecord({
+        ...sleepData,
+        user_id: user.id
+      });
+      await loadData();
+    } catch (err) {
+      alert("Gagal menyimpan catatan jam tidur: " + err.message);
+    }
+  };
+
+  const handleDeleteSleep = async (id, recordDate) => {
+    try {
+      await DataService.deleteSleepRecord(id, user.id, recordDate);
+      await loadData();
+    } catch (err) {
+      alert("Gagal menghapus catatan tidur: " + err.message);
+    }
+  };
+
+  // AI Chat → Database Handlers
+  // Menerima aksi hasil analisis AI ({ type: 'todo'|'finance'|'sleep', data }) dan menyimpannya ke Supabase
+  const handleAiExecuteActions = async (actions = []) => {
+    if (!user) {
+      setIsAuthOpen(true);
+      throw new Error('Silakan login terlebih dahulu agar AI bisa menyimpan data ke database.');
+    }
+    const results = [];
+    for (const action of actions) {
+      try {
+        let saved;
+        if (action.type === 'todo') {
+          saved = await DataService.addTodo({ ...action.data, user_id: user.id });
+        } else if (action.type === 'sleep') {
+          saved = await DataService.addSleepRecord({ ...action.data, user_id: user.id });
+        } else {
+          saved = await DataService.addRecord({ ...action.data, user_id: user.id });
+        }
+        results.push({ type: action.type, ok: true, data: saved });
+      } catch (err) {
+        results.push({ type: action.type, ok: false, data: action.data, error: err.message });
+      }
+    }
+    await loadData();
+    return results;
+  };
+
+  const handleAiUndoActions = async (results = []) => {
+    if (!user) return;
+    for (const r of results) {
+      if (!r.ok || !r.data?.id) continue;
+      if (r.type === 'todo') await DataService.deleteTodo(r.data.id, user.id);
+      else if (r.type === 'sleep') await DataService.deleteSleepRecord(r.data.id, user.id, r.data.record_date);
+      else await DataService.deleteRecord(r.data.id, user.id);
+    }
+    await loadData();
+  };
+
   // Auth Handlers
   const handleLogin = async (email, password) => {
     const loggedUser = await DataService.login(email, password);
@@ -268,6 +347,9 @@ export default function App() {
     setUser(null);
   };
 
+  const currentSleepMonth = selectedSleepMonth || selectedDate.slice(0, 7);
+  const currentSleepStats = calculateMonthlySleepStats(monthlySleepRecords, currentSleepMonth);
+
   return (
     <div className="min-h-screen bg-[#F6F4EE] dark:bg-[#121214] flex text-black dark:text-white transition-colors duration-200">
       {/* 1. SIDEBAR NAVIGATION */}
@@ -277,6 +359,7 @@ export default function App() {
         user={user}
         todosCount={todos.length}
         balance={cashflow.balance}
+        sleepAverage={currentSleepStats.averageHours}
         onOpenAuth={() => setIsAuthOpen(true)}
         onLogout={handleLogout}
         onRefreshData={loadData}
@@ -333,6 +416,7 @@ export default function App() {
               monthlyTodos={monthlyTodos}
               records={records}
               monthlyRecords={monthlyRecords}
+              monthlySleepRecords={monthlySleepRecords}
               cashflow={cashflow}
               monthlyCashflow={monthlyCashflow}
               selectedDate={selectedDate}
@@ -342,6 +426,8 @@ export default function App() {
               onNavigate={setActiveView}
               onToggleTodo={handleToggleTodo}
               onAddTodo={handleAddTodo}
+              onAiExecuteActions={handleAiExecuteActions}
+              onAiUndoActions={handleAiUndoActions}
             />
           )}
 
@@ -368,6 +454,17 @@ export default function App() {
               onAddRecord={handleAddRecord}
               onDeleteRecord={handleDeleteRecord}
               onUpdateRecord={handleUpdateRecord}
+              selectedDate={selectedDate}
+            />
+          )}
+
+          {activeView === 'sleep' && (
+            <SleepView
+              monthlySleepRecords={monthlySleepRecords}
+              selectedMonth={selectedSleepMonth}
+              onSelectMonth={setSelectedSleepMonth}
+              onSaveSleep={handleSaveSleep}
+              onDeleteSleep={handleDeleteSleep}
               selectedDate={selectedDate}
             />
           )}

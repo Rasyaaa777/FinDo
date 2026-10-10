@@ -18,6 +18,7 @@ export default function Sidebar({
   user,
   todosCount = 0,
   balance = 0,
+  sleepAverage = 0,
   onOpenAuth,
   onLogout,
   onRefreshData,
@@ -57,6 +58,14 @@ export default function Sidebar({
         ? `Rp ${(balance / 1_000_000).toFixed(1)}jt`
         : formatRupiah(balance),
       badgeColor: balance >= 0 ? 'bg-[#00D26A]' : 'bg-[#FF4B4B]'
+    },
+    {
+      id: 'sleep',
+      label: 'JAM TIDUR',
+      sublabel: 'Pola & Log Istirahat',
+      icon: Moon,
+      badge: sleepAverage > 0 ? `${sleepAverage}h/hari` : null,
+      badgeColor: 'bg-[#8338EC] text-white'
     }
   ];
 

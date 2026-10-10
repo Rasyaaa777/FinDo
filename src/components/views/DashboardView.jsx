@@ -1,6 +1,7 @@
 import React from 'react';
 import MonthlyTodoCard from '../dashboard/MonthlyTodoCard.jsx';
 import MonthlyFinanceCard from '../dashboard/MonthlyFinanceCard.jsx';
+import MonthlySleepCard from '../dashboard/MonthlySleepCard.jsx';
 import DailyTodoSection from '../dashboard/DailyTodoSection.jsx';
 import AiChatSection from '../dashboard/AiChatSection.jsx';
 import ProgressBar from '../dashboard/ProgressBar.jsx';
@@ -8,6 +9,7 @@ import {
   Calendar,
   Clock,
   Receipt,
+  Moon,
   Sparkles,
   TrendingUp,
   TrendingDown,
@@ -21,7 +23,8 @@ import {
   formatIndonesianMonth,
   getMonthPrefix,
   calculateMonthlyTodoStats,
-  calculateCategoryBreakdown
+  calculateCategoryBreakdown,
+  calculateMonthlySleepStats
 } from '../../lib/utils.js';
 
 export default function DashboardView({
@@ -29,6 +32,7 @@ export default function DashboardView({
   monthlyTodos = [],
   records = [],
   monthlyRecords = [],
+  monthlySleepRecords = [],
   cashflow,
   monthlyCashflow,
   selectedDate,
@@ -37,7 +41,9 @@ export default function DashboardView({
   isAiLoading,
   onNavigate,
   onToggleTodo,
-  onAddTodo
+  onAddTodo,
+  onAiExecuteActions,
+  onAiUndoActions
 }) {
   const monthPrefix = getMonthPrefix(selectedDate);
   const monthName = formatIndonesianMonth(monthPrefix);
@@ -45,6 +51,8 @@ export default function DashboardView({
   // Monthly stats calculations
   const monthlyTodoStats = calculateMonthlyTodoStats(monthlyTodos);
   const { categories: topExpenseCategories } = calculateCategoryBreakdown(monthlyRecords, 'expense');
+  const sleepStats = calculateMonthlySleepStats(monthlySleepRecords, monthPrefix);
+  const todaySleepRecord = monthlySleepRecords.find(r => r.record_date === selectedDate);
 
   // Context payload for AI chat
   const aiContextData = {
@@ -70,8 +78,28 @@ export default function DashboardView({
       expense: cashflow?.expense || 0,
       balance: cashflow?.balance || 0
     },
+    monthlySleep: {
+      averageHours: sleepStats.averageHours,
+      status: sleepStats.status,
+      loggedDays: sleepStats.loggedDays,
+      optimalCount: sleepStats.optimalCount
+    },
+    todaySleep: todaySleepRecord ? {
+      duration: todaySleepRecord.duration_hours,
+      quality: todaySleepRecord.quality,
+      bedtime: todaySleepRecord.bedtime,
+      wake_time: todaySleepRecord.wake_time,
+      notes: todaySleepRecord.notes
+    } : null,
     currentDate: formatIndonesianDate(selectedDate),
-    monthName
+    monthName,
+    recentRecords: monthlyRecords.slice(0, 30).map(r => ({
+      date: r.record_date,
+      type: r.type,
+      amount: r.amount,
+      category: r.category,
+      description: r.description
+    }))
   };
 
   return (
@@ -89,10 +117,10 @@ export default function DashboardView({
               </span>
             </div>
             <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-black tracking-tight leading-tight">
-              Pusat Kontrol Finansial & Produktivitas
+              Pusat Kontrol Finansial, Produktivitas & Kesehatan
             </h1>
             <p className="text-xs sm:text-sm font-semibold text-zinc-900 mt-1.5 leading-relaxed">
-              Pantau akumulasi target bulanan, eksekusi blok jam kerja hari ini, dan konsultasikan keputusan keuangan Anda dengan FinDo AI Advisor.
+              Pantau akumulasi to-do, arus kas, pola istirahat jam tidur Anda, dan konsultasikan keputusan dengan FinDo AI Advisor.
             </p>
           </div>
 
@@ -100,30 +128,37 @@ export default function DashboardView({
           <div className="flex flex-wrap sm:flex-nowrap gap-2.5 shrink-0">
             <button
               onClick={() => onNavigate('todos')}
-              className="neo-btn bg-black text-white hover:bg-zinc-800 py-2.5 px-4 text-xs flex items-center gap-2 shadow-[3px_3px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5"
+              className="neo-btn bg-black text-white hover:bg-zinc-800 py-2.5 px-3.5 text-xs flex items-center gap-2 shadow-[3px_3px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5"
             >
               <Clock className="w-4 h-4 text-white" strokeWidth={2.5} />
               ATUR JADWAL
             </button>
             <button
               onClick={() => onNavigate('finance')}
-              className="neo-btn bg-[#00E5CC] text-black hover:bg-teal-300 py-2.5 px-4 text-xs flex items-center gap-2 shadow-[3px_3px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5"
+              className="neo-btn bg-[#00E5CC] text-black hover:bg-teal-300 py-2.5 px-3.5 text-xs flex items-center gap-2 shadow-[3px_3px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5"
             >
               <Receipt className="w-4 h-4 text-black" strokeWidth={2.5} />
               CATAT MUTASI KAS
+            </button>
+            <button
+              onClick={() => onNavigate('sleep')}
+              className="neo-btn bg-[#8338EC] text-white hover:bg-[#6c2bd9] py-2.5 px-3.5 text-xs flex items-center gap-2 shadow-[3px_3px_0px_rgba(0,0,0,0.5)] active:translate-y-0.5"
+            >
+              <Moon className="w-4 h-4 text-white" strokeWidth={2.5} />
+              PANTAU JAM TIDUR
             </button>
           </div>
         </div>
       </div>
 
-      {/* 2. SECTION 1: AKUMULASI BULANAN (To-Do Bulanan + Laporan Keuangan Bulanan) */}
-      <section className="space-y-3">
+      {/* 2. SECTION 1: AKUMULASI BULANAN (To-Do Bulanan + Laporan Keuangan Bulanan + Jam Tidur) */}
+      <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-heading font-extrabold text-base sm:text-lg uppercase tracking-tight text-black dark:text-white flex items-center gap-2">
             <span>📊 IKHTISAR BULANAN ({monthName.toUpperCase()})</span>
           </h2>
           <span className="text-xs font-mono font-bold text-zinc-500 hidden sm:inline">
-            Akumulasi Data 1 Bulan Penuh
+            Akumulasi To-Do, Arus Kas & Waktu Istirahat
           </span>
         </div>
 
@@ -143,6 +178,15 @@ export default function DashboardView({
             onNavigate={onNavigate}
           />
         </div>
+
+        {/* C. Grafik & Pola Jam Tidur Bulanan (Hanya Cek / View-Only di Dashboard) */}
+        <MonthlySleepCard
+          monthlySleepRecords={monthlySleepRecords}
+          monthName={monthName}
+          selectedMonthPrefix={monthPrefix}
+          isReadOnly={true}
+          onNavigate={onNavigate}
+        />
       </section>
 
       {/* 3. SECTION 2: PROGRES & TO-DO LIST HARI INI */}
@@ -182,6 +226,10 @@ export default function DashboardView({
           onAnalyzeAi={onAnalyzeAi}
           isAiLoading={isAiLoading}
           contextData={aiContextData}
+          selectedDate={selectedDate}
+          onExecuteActions={onAiExecuteActions}
+          onUndoActions={onAiUndoActions}
+          onNavigate={onNavigate}
         />
       </section>
     </div>

@@ -232,5 +232,106 @@ export const DataService = {
 
     if (error) throw error;
     return true;
+  },
+
+  // ===================== SLEEP RECORDS =====================
+  async getMonthlySleepRecords(userId, monthPrefix) {
+    const supabase = getSupabase();
+    const prefix = monthPrefix || new Date().toISOString().slice(0, 7);
+    const [year, month] = prefix.split('-').map(Number);
+    const lastDay = new Date(year, month, 0).getDate();
+    const lastDayStr = String(lastDay).padStart(2, '0');
+
+    if (supabase && userId) {
+      try {
+        const { data, error } = await supabase
+          .from('sleep_records')
+          .select('*')
+          .eq('user_id', userId)
+          .gte('record_date', `${prefix}-01`)
+          .lte('record_date', `${prefix}-${lastDayStr}`)
+          .order('record_date', { ascending: true });
+
+        if (!error && data) {
+          try {
+            localStorage.setItem(`findo_sleep_${userId}_${prefix}`, JSON.stringify(data));
+          } catch (_) {}
+          return data;
+        }
+      } catch (err) {
+        console.warn("Supabase sleep_records fetch (fallback to local):", err.message);
+      }
+    }
+
+    // Local fallback
+    try {
+      const stored = localStorage.getItem(`findo_sleep_${userId}_${prefix}`);
+      if (stored) return JSON.parse(stored);
+    } catch (_) {}
+    return [];
+  },
+
+  async addSleepRecord(sleepData) {
+    const supabase = getSupabase();
+    const payload = {
+      ...sleepData,
+      id: sleepData.id || generateUUID(),
+      duration_hours: Number(sleepData.duration_hours) || 0,
+      created_at: sleepData.created_at || new Date().toISOString(),
+    };
+
+    if (supabase && payload.user_id) {
+      try {
+        const { data, error } = await supabase
+          .from('sleep_records')
+          .upsert([payload], { onConflict: 'user_id,record_date' })
+          .select();
+
+        if (!error && data?.[0]) {
+          return data[0];
+        }
+      } catch (err) {
+        console.warn("Supabase sleep_records upsert (fallback to local):", err.message);
+      }
+    }
+
+    // Local fallback
+    try {
+      const prefix = (payload.record_date || new Date().toISOString().slice(0, 7)).slice(0, 7);
+      const key = `findo_sleep_${payload.user_id}_${prefix}`;
+      const current = JSON.parse(localStorage.getItem(key) || '[]');
+      const filtered = current.filter(r => r.record_date !== payload.record_date);
+      filtered.push(payload);
+      filtered.sort((a, b) => (a.record_date || '').localeCompare(b.record_date || ''));
+      localStorage.setItem(key, JSON.stringify(filtered));
+    } catch (_) {}
+
+    return payload;
+  },
+
+  async deleteSleepRecord(id, userId, recordDate) {
+    const supabase = getSupabase();
+    if (supabase && userId) {
+      try {
+        await supabase
+          .from('sleep_records')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', userId);
+      } catch (err) {
+        console.warn("Supabase sleep_records delete warning:", err.message);
+      }
+    }
+
+    if (recordDate && userId) {
+      try {
+        const prefix = recordDate.slice(0, 7);
+        const key = `findo_sleep_${userId}_${prefix}`;
+        const current = JSON.parse(localStorage.getItem(key) || '[]');
+        const filtered = current.filter(r => r.id !== id && r.record_date !== recordDate);
+        localStorage.setItem(key, JSON.stringify(filtered));
+      } catch (_) {}
+    }
+    return true;
   }
 };

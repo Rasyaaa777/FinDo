@@ -30,11 +30,28 @@ CREATE TABLE IF NOT EXISTS financial_records (
 
 CREATE INDEX IF NOT EXISTS idx_finance_user_date ON financial_records (user_id, record_date);
 
--- 3. AKTIFKAN ROW LEVEL SECURITY (RLS)
+-- 3. TABEL CATATAN JAM TIDUR
+CREATE TABLE IF NOT EXISTS sleep_records (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid(),
+  record_date DATE DEFAULT CURRENT_DATE NOT NULL,
+  duration_hours NUMERIC(4, 2) CHECK (duration_hours > 0 AND duration_hours <= 24) NOT NULL,
+  bedtime TIME,
+  wake_time TIME,
+  quality VARCHAR(20) DEFAULT 'Baik',
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  CONSTRAINT uq_sleep_user_date UNIQUE (user_id, record_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sleep_user_date ON sleep_records (user_id, record_date);
+
+-- 4. AKTIFKAN ROW LEVEL SECURITY (RLS)
 ALTER TABLE hourly_todos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE financial_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sleep_records ENABLE ROW LEVEL SECURITY;
 
--- 4. KEBIJAKAN AKSES (POLICIES)
+-- 5. KEBIJAKAN AKSES (POLICIES)
 DROP POLICY IF EXISTS "Users can manage their own todos" ON hourly_todos;
 CREATE POLICY "Users can manage their own todos"
 ON hourly_todos
@@ -45,6 +62,13 @@ WITH CHECK (auth.uid() = user_id);
 DROP POLICY IF EXISTS "Users can manage their own financial records" ON financial_records;
 CREATE POLICY "Users can manage their own financial records"
 ON financial_records
+FOR ALL
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can manage their own sleep records" ON sleep_records;
+CREATE POLICY "Users can manage their own sleep records"
+ON sleep_records
 FOR ALL
 USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);

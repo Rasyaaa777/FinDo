@@ -11,22 +11,148 @@ import {
   Flame,
   CheckCircle2,
   RotateCcw,
-  Lightbulb
+  Lightbulb,
+  Clock,
+  Receipt,
+  Moon,
+  Undo2,
+  ArrowRight,
+  XCircle
 } from 'lucide-react';
 import { sendAiChatMessage } from '../../lib/aiService.js';
+import { parseAiCommand } from '../../lib/aiActionService.js';
+import { getTodayDateString, formatRupiah, formatShortDate } from '../../lib/utils.js';
+
+const nowTime = () => new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+// Kartu hasil aksi AI yang sudah tersimpan ke database (jelas terbaca di Light & Dark Mode)
+function ActionResultCard({ result }) {
+  const { type, ok, data, error } = result;
+  const isTodo = type === 'todo';
+  const isIncome = data?.type === 'income';
+  const isSleep = type === 'sleep';
+
+  return (
+    <div
+      className={`mt-2.5 p-3 border-2 border-black dark:border-white/30 rounded-[6px] text-xs transition-all ${
+        ok
+          ? isTodo
+            ? 'bg-[#E6FFFA] dark:bg-[#003B33] text-black dark:text-white shadow-[2px_2px_0px_#000]'
+            : isSleep
+            ? 'bg-[#F2E8FF] dark:bg-[#2E1065] text-black dark:text-white shadow-[2px_2px_0px_#000]'
+            : isIncome
+            ? 'bg-[#E3FCEB] dark:bg-[#0B3D1B] text-black dark:text-white shadow-[2px_2px_0px_#000]'
+            : 'bg-[#FFF0F0] dark:bg-[#3D0B0B] text-black dark:text-white shadow-[2px_2px_0px_#000]'
+          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 opacity-70'
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2 mb-1.5 pb-1 border-b border-black/10 dark:border-white/10">
+        <span className="flex items-center gap-1.5 font-heading font-extrabold uppercase text-[10px] tracking-wider text-black dark:text-white">
+          {isTodo ? (
+            <Clock className="w-3.5 h-3.5 text-[#00A88F] dark:text-[#00E5CC]" strokeWidth={2.5} />
+          ) : isSleep ? (
+            <Moon className="w-3.5 h-3.5 text-[#8338EC] dark:text-[#C4B5FD]" strokeWidth={2.5} />
+          ) : (
+            <Receipt className="w-3.5 h-3.5 text-[#00A855] dark:text-[#00D26A]" strokeWidth={2.5} />
+          )}
+          {isTodo ? 'TO-DO LIST PER JAM' : isSleep ? 'PELACAK JAM TIDUR' : isIncome ? 'CATATAN PEMASUKAN' : 'CATATAN PENGELUARAN'}
+        </span>
+        {ok ? (
+          <span className="text-[10px] font-mono font-extrabold text-black dark:text-black bg-[#00D26A] px-1.5 py-0.5 rounded border border-black flex items-center gap-1 shadow-[1px_1px_0px_#000]">
+            <CheckCircle2 className="w-3 h-3 text-black" strokeWidth={3} /> TERSIMPAN KE DB
+          </span>
+        ) : (
+          <span className="text-[10px] font-mono font-extrabold text-white bg-[#FF4B4B] px-1.5 py-0.5 rounded border border-black flex items-center gap-1">
+            <XCircle className="w-3 h-3" strokeWidth={3} /> GAGAL
+          </span>
+        )}
+      </div>
+
+      {isTodo ? (
+        <div className="space-y-1">
+          <p className="font-heading font-extrabold text-sm text-black dark:text-white">
+            {data.task_title}
+          </p>
+          <div className="flex items-center gap-2 font-mono text-[11px] text-zinc-700 dark:text-zinc-300 font-bold">
+            <span className="bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded">
+              📅 {formatShortDate(data.target_date)}
+            </span>
+            <span className="bg-[#FFE600] text-black px-1.5 py-0.5 rounded border border-black">
+              ⏰ {data.start_time?.slice(0, 5)} - {data.end_time?.slice(0, 5)}
+            </span>
+          </div>
+        </div>
+      ) : isSleep ? (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <p className="font-heading font-extrabold text-base text-[#8338EC] dark:text-[#C4B5FD]">
+              {data.duration_hours} Jam Tidur
+            </p>
+            <span className="text-[10px] font-mono font-extrabold px-1.5 py-0.5 rounded bg-[#8338EC] text-white">
+              {data.quality || 'Baik'}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-zinc-700 dark:text-zinc-300 font-bold">
+            <span className="bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded">
+              📅 {formatShortDate(data.record_date)}
+            </span>
+            {data.bedtime && data.wake_time && (
+              <span className="bg-[#FFE600] text-black px-1.5 py-0.5 rounded border border-black">
+                ⏰ {data.bedtime?.slice(0, 5)} - {data.wake_time?.slice(0, 5)}
+              </span>
+            )}
+            {data.notes && (
+              <span className="text-zinc-600 dark:text-zinc-400">
+                • {data.notes}
+              </span>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-1">
+          <p className="font-mono font-extrabold text-base text-black dark:text-white">
+            {isIncome ? '+' : '-'}{formatRupiah(data.amount)}
+          </p>
+          <div className="flex items-center gap-2 font-mono text-[11px] text-zinc-700 dark:text-zinc-300 font-bold">
+            <span className="bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded">
+              📁 {data.category}
+            </span>
+            <span className="bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded">
+              📅 {formatShortDate(data.record_date)}
+            </span>
+            {data.description && (
+              <span className="truncate max-w-[150px] text-zinc-600 dark:text-zinc-400">
+                • {data.description}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!ok && error && (
+        <p className="text-[11px] font-mono font-bold text-[#FF4B4B] mt-1 bg-red-100 p-1 rounded">
+          ⚠️ {error}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export default function AiChatSection({
   aiInsight,
   onAnalyzeAi,
   isAiLoading,
-  contextData
+  contextData,
+  onExecuteActions,
+  onUndoActions,
+  onNavigate
 }) {
   const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'insight'
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
       role: 'assistant',
-      text: 'Halo! Saya **FinDo AI Advisor**. Saya siap menganalisis keuangan dan jadwal to-do harian serta bulanan Anda. Mau tanya tips hemat, evaluasi prioritas hari ini, atau strategi tabungan?',
+      text: 'Halo! Saya **FinDo AI Advisor**. Selain menganalisis keuangan, to-do, dan jam tidur, saya juga bisa **langsung mencatat** untuk Anda.\n\nContoh:\n• "beli kopi 25rb"\n• "tadi malam tidur 7.5 jam"\n• "meeting klien besok jam 2-3 siang"\n\nSaya akan otomatis mendeteksi apakah itu masuk ke To-Do List, Laporan Keuangan, atau Jam Tidur lalu menyimpannya ke database.',
       time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -58,6 +184,48 @@ export default function AiChatSection({
     setIsSending(true);
 
     try {
+      // 1. AI menganalisis: apakah ini perintah input (to-do / keuangan) atau chat biasa?
+      const command = await parseAiCommand(query, getTodayDateString());
+
+      if (command.intent !== 'chat' && command.actions.length > 0 && onExecuteActions) {
+        // 2. AI input ke database sesuai hasil analisis
+        let results;
+        try {
+          results = await onExecuteActions(command.actions);
+        } catch (execErr) {
+          setMessages(prev => [...prev, {
+            id: 'msg-err-' + Date.now(),
+            role: 'assistant',
+            text: '⚠️ ' + execErr.message,
+            time: nowTime()
+          }]);
+          return;
+        }
+
+        const okCount = results.filter(r => r.ok).length;
+        const todoCount = results.filter(r => r.ok && r.type === 'todo').length;
+        const finCount = results.filter(r => r.ok && r.type === 'finance').length;
+        const sleepCount = results.filter(r => r.ok && r.type === 'sleep').length;
+        const destinations = [
+          todoCount ? `${todoCount} item ke **To-Do List**` : null,
+          finCount ? `${finCount} item ke **Laporan Keuangan**` : null,
+          sleepCount ? `${sleepCount} catatan ke **Jam Tidur**` : null
+        ].filter(Boolean).join(' dan ');
+
+        // 3. Tampilkan output yang sudah dilakukan AI
+        setMessages(prev => [...prev, {
+          id: 'msg-bot-' + Date.now(),
+          role: 'assistant',
+          text: okCount > 0
+            ? `✅ ${command.reply || 'Siap, sudah dicatat!'}\nDisimpan: ${destinations}.`
+            : '⚠️ Gagal menyimpan data ke database. Periksa koneksi atau login Anda.',
+          actionResults: results,
+          time: nowTime()
+        }]);
+        return;
+      }
+
+      // Chat biasa → advisor
       const replyText = await sendAiChatMessage(
         newHistory.map(m => ({ role: m.role, text: m.text })),
         contextData
@@ -67,7 +235,7 @@ export default function AiChatSection({
         id: 'msg-bot-' + Date.now(),
         role: 'assistant',
         text: replyText || 'Maaf, saya tidak dapat memproses jawaban saat ini.',
-        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+        time: nowTime()
       };
       setMessages(prev => [...prev, botMsg]);
     } catch (err) {
@@ -76,11 +244,21 @@ export default function AiChatSection({
         id: 'msg-err-' + Date.now(),
         role: 'assistant',
         text: '⚠️ Terjadi kendala saat menghubungi AI. Silakan coba sesaat lagi.',
-        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+        time: nowTime()
       };
       setMessages(prev => [...prev, errorMsg]);
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleUndo = async (msgId, results) => {
+    if (!onUndoActions) return;
+    try {
+      await onUndoActions(results);
+      setMessages(prev => prev.map(m => (m.id === msgId ? { ...m, undone: true } : m)));
+    } catch (err) {
+      alert('Gagal membatalkan: ' + err.message);
     }
   };
 
@@ -96,10 +274,10 @@ export default function AiChatSection({
   };
 
   const quickPrompts = [
-    "Bagaimana kesehatan keuanganku bulan ini?",
-    "Beri tips selesaikan sisa to-do hari ini",
-    "Kategori apa pengeluaran terbesarku?",
-    "Strategi agar saldo kas tetap surplus"
+    "Catat tidur semalam 7.5 jam",
+    "Beli makan siang 35rb",
+    "Belajar React besok jam 19-21",
+    "Bagaimana kualitas tidur & keuanganku bulan ini?"
   ];
 
   // Helper for insight status badge
@@ -184,7 +362,7 @@ export default function AiChatSection({
           <div className="px-4 py-2 border-b-2 border-black/10 bg-white dark:bg-[#1E1E24] flex items-center justify-between text-xs font-mono">
             <span className="text-zinc-600 dark:text-zinc-400 font-bold flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-[#00D26A] animate-pulse" />
-              FinDo Advisor (Gemini 1.5)
+              FinDo Advisor • Auto-Input Aktif
             </span>
             <button
               onClick={handleClearChat}
@@ -222,6 +400,45 @@ export default function AiChatSection({
                     }`}
                   >
                     {msg.text}
+                    {msg.actionResults && (
+                      <div className={msg.undone ? 'line-through opacity-50' : ''}>
+                        {msg.actionResults.map((r, i) => (
+                          <ActionResultCard key={i} result={r} />
+                        ))}
+                      </div>
+                    )}
+                    {msg.actionResults && msg.actionResults.some(r => r.ok) && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {msg.undone ? (
+                          <span className="text-[10px] font-mono font-bold text-zinc-500">↩ Dibatalkan & dihapus dari database</span>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleUndo(msg.id, msg.actionResults)}
+                              className="text-[10px] font-mono font-bold px-2 py-1 bg-white border border-black rounded-[3px] shadow-[1px_1px_0px_#000] hover:bg-[#FFE4E4] flex items-center gap-1 text-black"
+                            >
+                              <Undo2 className="w-3 h-3" /> BATALKAN
+                            </button>
+                            {onNavigate && msg.actionResults.some(r => r.ok && r.type === 'todo') && (
+                              <button
+                                onClick={() => onNavigate('todos')}
+                                className="text-[10px] font-mono font-bold px-2 py-1 bg-[#00E5CC] border border-black rounded-[3px] shadow-[1px_1px_0px_#000] flex items-center gap-1 text-black"
+                              >
+                                LIHAT TO-DO <ArrowRight className="w-3 h-3" />
+                              </button>
+                            )}
+                            {onNavigate && msg.actionResults.some(r => r.ok && r.type === 'finance') && (
+                              <button
+                                onClick={() => onNavigate('finance')}
+                                className="text-[10px] font-mono font-bold px-2 py-1 bg-[#FFE600] border border-black rounded-[3px] shadow-[1px_1px_0px_#000] flex items-center gap-1 text-black"
+                              >
+                                LIHAT KEUANGAN <ArrowRight className="w-3 h-3" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
                     <div
                       className={`text-[9px] font-mono mt-1 ${
                         isUser ? 'text-zinc-700 text-right' : 'text-zinc-400 text-left'
@@ -276,7 +493,7 @@ export default function AiChatSection({
           >
             <input
               type="text"
-              placeholder="Tanya apa saja seputar keuangan & to-do..."
+              placeholder="Ketik: 'tidur 7.5 jam' / 'beli bensin 30rb' / 'rapat jam 10' / tanya apa saja..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               disabled={isSending}

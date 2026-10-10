@@ -121,3 +121,93 @@ export const calculateCategoryBreakdown = (records = [], type = 'expense') => {
     dominant: categories[0] || null
   };
 };
+
+// ===================== SLEEP TRACKER HELPERS =====================
+export const formatSleepHours = (hours) => {
+  if (hours === undefined || hours === null || isNaN(hours)) return '0 jam';
+  const h = Math.floor(hours);
+  const m = Math.round((hours - h) * 60);
+  if (m === 0) return `${h} jam`;
+  return `${h} jam ${m} mnt`;
+};
+
+export const calculateMonthlySleepStats = (sleepRecords = [], monthPrefix) => {
+  const prefix = monthPrefix || getTodayDateString().slice(0, 7);
+  const [year, month] = prefix.split('-').map(Number);
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  // Filter records to this month
+  const recordsInMonth = sleepRecords.filter(r => (r.record_date || '').startsWith(prefix));
+  const recordMap = {};
+  recordsInMonth.forEach(r => {
+    recordMap[r.record_date] = r;
+  });
+
+  const loggedDays = recordsInMonth.length;
+  const totalHours = recordsInMonth.reduce((sum, r) => sum + Number(r.duration_hours || 0), 0);
+  const averageHours = loggedDays > 0 ? Number((totalHours / loggedDays).toFixed(1)) : 0;
+
+  let optimalCount = 0; // 7 - 9 jam
+  let underSleepCount = 0; // < 7 jam
+  let overSleepCount = 0; // > 9 jam
+
+  recordsInMonth.forEach(r => {
+    const d = Number(r.duration_hours || 0);
+    if (d >= 7 && d <= 9) optimalCount++;
+    else if (d < 7) underSleepCount++;
+    else overSleepCount++;
+  });
+
+  // Generate chart data for all days in month
+  const chartDays = [];
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dayStr = String(day).padStart(2, '0');
+    const dateStr = `${prefix}-${dayStr}`;
+    const entry = recordMap[dateStr];
+    chartDays.push({
+      day,
+      date: dateStr,
+      duration: entry ? Number(entry.duration_hours) : 0,
+      quality: entry?.quality || null,
+      bedtime: entry?.bedtime || null,
+      wake_time: entry?.wake_time || null,
+      notes: entry?.notes || null,
+      hasData: Boolean(entry)
+    });
+  }
+
+  // Health assessment status
+  let status = 'Belum Ada Data';
+  let badgeColor = 'bg-zinc-200 text-zinc-700';
+
+  if (loggedDays > 0) {
+    if (averageHours >= 7 && averageHours <= 9) {
+      status = 'Optimal (7-9 Jam)';
+      badgeColor = 'bg-[#00D26A] text-black';
+    } else if (averageHours >= 6 && averageHours < 7) {
+      status = 'Cukup (Perlu Ditingkatkan)';
+      badgeColor = 'bg-[#FFE600] text-black';
+    } else if (averageHours < 6) {
+      status = 'Kurang Tidur (Begadang)';
+      badgeColor = 'bg-[#FF4B4B] text-white';
+    } else {
+      status = 'Tidur Panjang (>9 Jam)';
+      badgeColor = 'bg-[#00E5CC] text-black';
+    }
+  }
+
+  return {
+    prefix,
+    daysInMonth,
+    loggedDays,
+    totalHours,
+    averageHours,
+    optimalCount,
+    underSleepCount,
+    overSleepCount,
+    chartDays,
+    status,
+    badgeColor
+  };
+};
+
