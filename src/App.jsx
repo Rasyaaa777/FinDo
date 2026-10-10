@@ -409,7 +409,7 @@ export default function App() {
         </header>
 
         {/* View Content Wrapper */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1280px] w-full mx-auto">
+        <main className="flex-1 p-2.5 sm:p-3.5 lg:p-4 max-w-[1780px] w-full mx-auto transition-all duration-300">
           {activeView === 'dashboard' && (
             <DashboardView
               todos={todos}

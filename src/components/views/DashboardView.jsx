@@ -104,88 +104,81 @@ export default function DashboardView({
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-150">
-      {/* 1. SECTION 1: AKUMULASI BULANAN (To-Do Bulanan + Laporan Keuangan Bulanan + Jam Tidur) */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-heading font-extrabold text-base sm:text-lg uppercase tracking-tight text-black dark:text-white flex items-center gap-2">
-            <span>📊 IKHTISAR BULANAN ({monthName.toUpperCase()})</span>
-          </h2>
-          <span className="text-xs font-mono font-bold text-zinc-500 hidden sm:inline">
-            Akumulasi To-Do, Arus Kas & Waktu Istirahat
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* A. Akumulasi To-Do List Bulanan dengan Persen */}
-          <MonthlyTodoCard
-            monthlyStats={monthlyTodoStats}
-            monthName={monthName}
-            onNavigate={onNavigate}
-          />
-
-          {/* B. Laporan Keuangan Per Bulan */}
-          <MonthlyFinanceCard
-            monthlyCashflow={monthlyCashflow}
-            monthlyRecords={monthlyRecords}
-            monthName={monthName}
-            onNavigate={onNavigate}
-          />
-        </div>
-
-        {/* C. Grafik & Pola Jam Tidur Bulanan (Hanya Cek / View-Only di Dashboard) */}
-        <MonthlySleepCard
-          monthlySleepRecords={monthlySleepRecords}
-          monthName={monthName}
-          selectedMonthPrefix={monthPrefix}
-          isReadOnly={true}
-          onNavigate={onNavigate}
-        />
-      </section>
-
-      {/* 3. SECTION 2: PROGRES & TO-DO LIST HARI INI */}
-      <section className="space-y-4">
-        {/* Progress Bar Gauge Hari Ini */}
-        <ProgressBar todos={todos} />
-
-        {/* Tampilan To-Do List Hari Ini (Interactive & Inline Add) */}
-        <DailyTodoSection
-          todos={todos}
-          selectedDate={selectedDate}
-          onToggleTodo={onToggleTodo}
-          onAddTodo={onAddTodo}
-          onNavigate={onNavigate}
-        />
-      </section>
-
-      {/* 4. SECTION 3: AI ANALISIS & CHAT INTERAKTIF DENGAN AI */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-[#FF2A85] text-white flex items-center justify-center rounded border border-black shadow-[1px_1px_0px_#000]">
-              <Sparkles className="w-3.5 h-3.5" />
+    <div className="w-full space-y-3 sm:space-y-3.5 animate-in fade-in duration-150">
+      {/* MASTER DASHBOARD GRID: LEFT AREA (SECTIONS 1, 3, 5, 6, 4) + RIGHT COLUMN (SECTION 2) */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 sm:gap-3.5 items-stretch">
+        
+        {/* === LEFT AREA (XL: 8 COLS / ~67% WIDTH) === */}
+        <div className="xl:col-span-8 flex flex-col gap-3 sm:gap-3.5">
+          
+          {/* ROW 1: SECTION 1 (To-Do Bulanan) + SECTION 3 (Laporan Keuangan Bulanan) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-3.5 items-stretch">
+            {/* Section 1: To-Do List Bulanan */}
+            <div className="flex flex-col h-full">
+              <MonthlyTodoCard
+                monthlyStats={monthlyTodoStats}
+                monthName={monthName}
+                onNavigate={onNavigate}
+              />
             </div>
-            <h2 className="font-heading font-extrabold text-base sm:text-lg uppercase tracking-tight text-black dark:text-white">
-              KECERDASAN BUATAN: AI ANALISIS & CHAT ASISTEN
-            </h2>
+
+            {/* Section 3: Laporan Keuangan Bulanan */}
+            <div className="flex flex-col h-full">
+              <MonthlyFinanceCard
+                monthlyCashflow={monthlyCashflow}
+                monthlyRecords={monthlyRecords}
+                monthName={monthName}
+                onNavigate={onNavigate}
+              />
+            </div>
           </div>
-          <span className="neo-badge bg-[#00E5CC] text-black text-[10px] font-bold hidden sm:inline-flex">
-            GEMINI 1.5 PRO & FLASH
-          </span>
+
+          {/* ROW 2: SECTION 5 (Progres To-Do Harian) + SECTION 6 (AI Chat) */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-3.5 items-stretch">
+            {/* Section 5: Progres To-Do List Harian (~35% / 4 Cols) */}
+            <div className="md:col-span-4 flex flex-col h-full">
+              <ProgressBar todos={todos} onNavigate={onNavigate} />
+            </div>
+
+            {/* Section 6: AI Chat (~65% / 8 Cols) */}
+            <div className="md:col-span-8 flex flex-col h-full">
+              <AiChatSection
+                aiInsight={aiInsight}
+                onAnalyzeAi={onAnalyzeAi}
+                isAiLoading={isAiLoading}
+                contextData={aiContextData}
+                selectedDate={selectedDate}
+                onExecuteActions={onAiExecuteActions}
+                onUndoActions={onAiUndoActions}
+                onNavigate={onNavigate}
+              />
+            </div>
+          </div>
+
+          {/* ROW 3: SECTION 4 (Dashboard Jam Tidur Bulanan - Full Width of Left Area) */}
+          <div className="w-full">
+            <MonthlySleepCard
+              monthlySleepRecords={monthlySleepRecords}
+              monthName={monthName}
+              selectedMonthPrefix={monthPrefix}
+              isReadOnly={true}
+              onNavigate={onNavigate}
+            />
+          </div>
         </div>
 
-        {/* AI Chat & Insight Component */}
-        <AiChatSection
-          aiInsight={aiInsight}
-          onAnalyzeAi={onAnalyzeAi}
-          isAiLoading={isAiLoading}
-          contextData={aiContextData}
-          selectedDate={selectedDate}
-          onExecuteActions={onAiExecuteActions}
-          onUndoActions={onAiUndoActions}
-          onNavigate={onNavigate}
-        />
-      </section>
+        {/* === RIGHT COLUMN (XL: 4 COLS / ~33% WIDTH): SECTION 2 (To-Do List Harian - Full Height) === */}
+        <div className="xl:col-span-4 h-full flex flex-col">
+          <DailyTodoSection
+            todos={todos}
+            selectedDate={selectedDate}
+            onToggleTodo={onToggleTodo}
+            onAddTodo={onAddTodo}
+            onNavigate={onNavigate}
+          />
+        </div>
+
+      </div>
     </div>
   );
 }
