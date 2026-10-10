@@ -318,7 +318,7 @@ export default function AiChatSection({
   } = aiInsight || {};
 
   return (
-    <div className="bg-white dark:bg-[#1E1E24] border-2 sm:border-3 border-black shadow-[3px_3px_0px_#000000] rounded-[5px] overflow-hidden flex flex-col h-[270px] sm:h-[290px]">
+    <div className="bg-white dark:bg-[#1E1E24] border-2 sm:border-3 border-black shadow-[3px_3px_0px_#000000] rounded-[5px] overflow-hidden flex flex-col h-full min-h-[280px]">
       {/* Top Neo-Brutalist Strip Header */}
       <div className="bg-[#FF2A85] text-white p-2 sm:p-2.5 border-b-2 border-black flex items-center justify-between">
         <div className="flex items-center gap-1.5">
