@@ -131,13 +131,153 @@ export const formatSleepHours = (hours) => {
   return `${h} jam ${m} mnt`;
 };
 
+// Menghitung durasi sesi tidur dalam jam (e.g., '13:00' ke '15:00' = 2 jam, '23:00' ke '06:30' = 7.5 jam)
+export const calculateSessionDuration = (startTime, endTime) => {
+  if (!startTime || !endTime) return 0;
+  const [sH, sM] = startTime.split(':').map(Number);
+  const [eH, eM] = endTime.split(':').map(Number);
+  if (isNaN(sH) || isNaN(sM) || isNaN(eH) || isNaN(eM)) return 0;
+
+  let diffMinutes = (eH * 60 + eM) - (sH * 60 + sM);
+  if (diffMinutes <= 0) {
+    // Lewat tengah malam (misal 23:00 ke 07:00 atau 01:00 ke 08:00)
+    diffMinutes += 24 * 60;
+  }
+  const hours = diffMinutes / 60;
+  return Number(hours.toFixed(1));
+};
+
+// Format tampilan sesi tidur untuk tooltip atau ringkasan
+export const formatSessionListText = (sessions = []) => {
+  if (!sessions || sessions.length === 0) return '';
+  return sessions
+    .map(s => `${s.name || 'Sesi'}: ${s.startTime?.slice(0, 5)} - ${s.endTime?.slice(0, 5)} (${s.duration}h)`)
+    .join(' • ');
+};
+
+// Parse catatan tidur (mengekstrak multi-sesi jika tersimpan dalam notes metadata)
+export const parseSleepRecord = (record) => {
+  if (!record) return { sessions: [], cleanNotes: '', totalHours: 0 };
+
+  const rawNotes = record.notes || '';
+  let sessions = [];
+  let cleanNotes = rawNotes;
+
+  const sessionMatch = rawNotes.match(/<!--FINDO_SESSIONS:(.*?)-->/s);
+  if (sessionMatch) {
+    try {
+      const parsed = JSON.parse(sessionMatch[1]);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        sessions = parsed;
+      }
+      cleanNotes = rawNotes.replace(/<!--FINDO_SESSIONS:.*?-->/s, '').trim();
+    } catch (_) {}
+  } else if (Array.isArray(record.sessions) && record.sessions.length > 0) {
+    sessions = record.sessions;
+  } else if (record.bedtime && record.wake_time) {
+    // Single session fallback
+    const start = record.bedtime.slice(0, 5);
+    const end = record.wake_time.slice(0, 5);
+    const dur = Number(record.duration_hours) || calculateSessionDuration(start, end);
+    sessions = [
+      {
+        id: 'legacy-1',
+        name: 'Tidur Utama',
+        startTime: start,
+        endTime: end,
+        duration: dur
+      }
+    ];
+  }
+
+  // Hitung total jam dari sessions jika ada
+  let totalHours = Number(record.duration_hours) || 0;
+  if (sessions.length > 0) {
+    const sumDurations = sessions.reduce((sum, s) => sum + (Number(s.duration) || 0), 0);
+    if (sumDurations > 0) {
+      totalHours = Number(sumDurations.toFixed(1));
+    }
+  }
+
+  return {
+    ...record,
+    duration_hours: totalHours,
+    sessions,
+    cleanNotes,
+    notes: cleanNotes
+  };
+};
+
+// Serialize payload tidur untuk disimpan ke Supabase & LocalStorage
+export const serializeSleepRecord = (data) => {
+  const {
+    id,
+    user_id,
+    record_date,
+    duration_hours,
+    sessions = [],
+    bedtime,
+    wake_time,
+    quality = 'Baik',
+    notes = '',
+    created_at
+  } = data;
+
+  const cleanNotes = (notes || '').replace(/<!--FINDO_SESSIONS:.*?-->/s, '').trim();
+
+  let finalDuration = Number(duration_hours) || 0;
+  let finalBedtime = bedtime || null;
+  let finalWakeTime = wake_time || null;
+  let serializedNotes = cleanNotes || null;
+
+  if (Array.isArray(sessions) && sessions.length > 0) {
+    // Hitung total durasi dari semua sesi
+    const sum = sessions.reduce((total, s) => {
+      const d = Number(s.duration) || calculateSessionDuration(s.startTime, s.endTime);
+      return total + d;
+    }, 0);
+    finalDuration = Number(sum.toFixed(1));
+
+    // Pilih bedtime & wake_time representatif
+    const nightSession = sessions.find(s => s.name?.toLowerCase().includes('malam')) || sessions[sessions.length - 1];
+    if (nightSession) {
+      finalBedtime = nightSession.startTime?.slice(0, 5);
+      finalWakeTime = nightSession.endTime?.slice(0, 5);
+    } else {
+      finalBedtime = sessions[0].startTime?.slice(0, 5);
+      finalWakeTime = sessions[sessions.length - 1].endTime?.slice(0, 5);
+    }
+
+    // Embed session metadata ke dalam field notes
+    const metaTag = `<!--FINDO_SESSIONS:${JSON.stringify(sessions)}-->`;
+    serializedNotes = cleanNotes ? `${cleanNotes}\n${metaTag}` : metaTag;
+  }
+
+  return {
+    id,
+    user_id,
+    record_date,
+    duration_hours: finalDuration,
+    bedtime: finalBedtime,
+    wake_time: finalWakeTime,
+    quality,
+    notes: serializedNotes,
+    sessions,
+    cleanNotes,
+    created_at
+  };
+};
+
 export const calculateMonthlySleepStats = (sleepRecords = [], monthPrefix) => {
   const prefix = monthPrefix || getTodayDateString().slice(0, 7);
   const [year, month] = prefix.split('-').map(Number);
   const daysInMonth = new Date(year, month, 0).getDate();
 
-  // Filter records to this month
-  const recordsInMonth = sleepRecords.filter(r => (r.record_date || '').startsWith(prefix));
+  // Filter and parse records to this month
+  const recordsInMonth = (sleepRecords || [])
+    .filter(r => (r.record_date || '').startsWith(prefix))
+    .map(r => parseSleepRecord(r));
+
   const recordMap = {};
   recordsInMonth.forEach(r => {
     recordMap[r.record_date] = r;
@@ -171,7 +311,8 @@ export const calculateMonthlySleepStats = (sleepRecords = [], monthPrefix) => {
       quality: entry?.quality || null,
       bedtime: entry?.bedtime || null,
       wake_time: entry?.wake_time || null,
-      notes: entry?.notes || null,
+      notes: entry?.cleanNotes || null,
+      sessions: entry?.sessions || [],
       hasData: Boolean(entry)
     });
   }

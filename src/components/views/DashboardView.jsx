@@ -89,7 +89,8 @@ export default function DashboardView({
       quality: todaySleepRecord.quality,
       bedtime: todaySleepRecord.bedtime,
       wake_time: todaySleepRecord.wake_time,
-      notes: todaySleepRecord.notes
+      sessions: todaySleepRecord.sessions || [],
+      notes: todaySleepRecord.cleanNotes || todaySleepRecord.notes
     } : null,
     currentDate: formatIndonesianDate(selectedDate),
     monthName,

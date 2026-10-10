@@ -1,7 +1,7 @@
 // FinDo AI Action Service
 // Mengubah kalimat bebas user menjadi aksi database (to-do / laporan keuangan)
 import { getGeminiApiKey, GEMINI_MODEL } from './aiService.js';
-import { getTodayDateString } from './utils.js';
+import { getTodayDateString, calculateSessionDuration } from './utils.js';
 
 export const EXPENSE_CATEGORIES = [
   'Makanan & Minuman',
@@ -90,13 +90,37 @@ const sanitizeActions = (actions = [], today) => {
     }
 
     if (a.type === 'sleep') {
-      const duration = Number(a.duration_hours);
+      let rawSessions = [];
+      if (Array.isArray(a.sessions) && a.sessions.length > 0) {
+        for (const s of a.sessions) {
+          const start = normalizeTime(s.startTime || s.start_time || s.start);
+          const end = normalizeTime(s.endTime || s.end_time || s.end);
+          if (start && end) {
+            const dur = Number(s.duration) || calculateSessionDuration(start, end);
+            rawSessions.push({
+              name: String(s.name || s.title || 'Sesi Tidur').slice(0, 50),
+              startTime: start,
+              endTime: end,
+              duration: dur
+            });
+          }
+        }
+      }
+
+      let duration = Number(a.duration_hours);
+      if (rawSessions.length > 0) {
+        const sum = rawSessions.reduce((tot, s) => tot + s.duration, 0);
+        if (sum > 0) duration = Number(sum.toFixed(1));
+      }
+
       if (!duration || duration <= 0) continue;
+
       clean.push({
         type: 'sleep',
         data: {
           record_date: isValidDate(a.record_date) ? a.record_date : today,
           duration_hours: Math.min(Math.max(Number(duration.toFixed(1)), 0.5), 24),
+          sessions: rawSessions.length > 0 ? rawSessions : undefined,
           bedtime: normalizeTime(a.bedtime),
           wake_time: normalizeTime(a.wake_time),
           quality: ['Sangat Baik', 'Baik', 'Cukup', 'Kurang'].includes(a.quality) ? a.quality : 'Baik',
@@ -198,8 +222,51 @@ const localParse = (text, today) => {
   }
 
   // Cek apakah ini pencatatan jam tidur
-  const isSleepLog = /(?:tidur|bobo|sleep|begadang)\b/i.test(t);
+  const isSleepLog = /(?:tidur|bobo|sleep|begadang|nap)\b/i.test(t);
   if (isSleepLog && !isQuestionOrChat) {
+    // 1. Cek apakah ada multi-sesi (misal: siang 13:00-15:00 dan malam 01:00-08:00)
+    const detectedSessions = [];
+    const multiRegex = /(?:(siang|sore|pagi|malam|malem)?\s*(?:jam|pukul)?\s*(\d{1,2}(?:[:.]\d{2})?)\s*(?:sampai|sampe|-|s\/d|hingga)\s*(?:jam|pukul)?\s*(\d{1,2}(?:[:.]\d{2})?))/gi;
+    let m;
+    while ((m = multiRegex.exec(text)) !== null) {
+      const label = m[1] || '';
+      const start = normalizeTime(m[2]) || `${pad(Number(m[2]))}:00`;
+      const end = normalizeTime(m[3]) || `${pad(Number(m[3]))}:00`;
+      if (start && end) {
+        let name = 'Sesi Tidur';
+        const contextStr = text.slice(Math.max(0, m.index - 20), Math.min(text.length, m.index + 35)).toLowerCase();
+        if (/siang/i.test(label) || /siang/i.test(contextStr)) name = 'Tidur Siang';
+        else if (/malam|malem/i.test(label) || /malam|malem/i.test(contextStr)) name = 'Tidur Malam';
+        else if (/pagi/i.test(label)) name = 'Istirahat Pagi';
+        else if (/sore|nap/i.test(label)) name = 'Power Nap';
+
+        const dur = calculateSessionDuration(start, end);
+        detectedSessions.push({ name, startTime: start, endTime: end, duration: dur });
+      }
+    }
+
+    if (detectedSessions.length > 1) {
+      const totalDur = Number(detectedSessions.reduce((sum, r) => sum + r.duration, 0).toFixed(1));
+      const sleepDate = /kemarin|semalam|tadi malam/i.test(t) ? today : date;
+      const quality = totalDur >= 7 && totalDur <= 9 ? 'Baik' : (totalDur < 6 ? 'Kurang' : 'Baik');
+      const nightSess = detectedSessions.find(r => r.name.toLowerCase().includes('malam')) || detectedSessions[detectedSessions.length - 1];
+
+      return {
+        intent: 'sleep',
+        reply: `Sip! Sudah aku catat ${detectedSessions.length} sesi tidur (${detectedSessions.map(r => `${r.name} ${r.duration}h`).join(' + ')}) dengan total ${totalDur} jam untuk tanggal ${sleepDate} ya!`.trim(),
+        actions: [{
+          type: 'sleep',
+          record_date: sleepDate,
+          duration_hours: totalDur,
+          sessions: detectedSessions,
+          bedtime: nightSess?.startTime || detectedSessions[0].startTime,
+          wake_time: nightSess?.endTime || detectedSessions[detectedSessions.length - 1].endTime,
+          quality,
+          notes: `${detectedSessions.length} sesi tidur (${detectedSessions.map(r => r.name).join(' & ')})`
+        }]
+      };
+    }
+
     const durMatch = /(\d+(?:[.,]\d+)?)\s*(?:jam|jm|h)\b/i.exec(text);
     let duration = null;
     let bedtime = null;
@@ -213,11 +280,7 @@ const localParse = (text, today) => {
       if (sleepTimes) {
         bedtime = normalizeTime(sleepTimes[1]) || `${pad(Number(sleepTimes[1]))}:00`;
         wakeTime = normalizeTime(sleepTimes[2]) || `${pad(Number(sleepTimes[2]))}:00`;
-        const [bH, bM] = bedtime.split(':').map(Number);
-        const [wH, wM] = wakeTime.split(':').map(Number);
-        let diffMinutes = (wH * 60 + wM) - (bH * 60 + bM);
-        if (diffMinutes <= 0) diffMinutes += 24 * 60;
-        duration = Number((diffMinutes / 60).toFixed(1));
+        duration = calculateSessionDuration(bedtime, wakeTime);
       }
     }
 
@@ -340,8 +403,11 @@ Klasifikasikan pesan pengguna ke salah satu dari:
    - "tadi siang beli makan siang 25rb" -> expense, amount: 25000, category: "Makanan & Minuman", description: "Makan Siang"
    - "gajian masuk 7,5 juta" -> income, amount: 7500000, category: "Gaji Pokok", description: "Gaji Bulanan"
 
-4. "sleep": Pengguna ingin MENCATAT JAM TIDUR / WAKTU ISTIRAHAT (ada durasi jam tidur, waktu tidur, atau jam bangun).
+4. "sleep": Pengguna ingin MENCATAT JAM TIDUR / WAKTU ISTIRAHAT (ada durasi jam tidur, waktu tidur, jam bangun, atau multi-sesi misal tidur siang + malam).
+   BISA MULTI-SESI! Jika pengguna menyebut tidur siang lalu malam (misal "jam 13.00 tidur sampe 15.00 trus malem nya jam 01.00 sampe 08.00"):
+   Hitung durasi total (2 + 7 = 9 jam) dan sertakan array "sessions".
    Contoh:
+   - "tadi siang tidur jam 13:00 - 15:00 terus malam jam 01:00 - 08:00" -> type: "sleep", record_date: "${today}", duration_hours: 9, sessions: [{"name":"Tidur Siang","startTime":"13:00","endTime":"15:00","duration":2},{"name":"Tidur Malam","startTime":"01:00","endTime":"08:00","duration":7}], bedtime: "01:00", wake_time: "08:00", quality: "Baik", notes: "Tidur siang & malam"
    - "tadi malam aku tidur 7 jam" -> type: "sleep", record_date: "${today}", duration_hours: 7, quality: "Baik"
    - "semalam tidur jam 23:00 bangun jam 07:00" -> type: "sleep", record_date: "${today}", duration_hours: 8, bedtime: "23:00", wake_time: "07:00", quality: "Baik"
    - "kemarin begadang cuma tidur 4 jam" -> type: "sleep", record_date: "${today}", duration_hours: 4, quality: "Kurang", notes: "Begadang"
@@ -355,7 +421,7 @@ Aturan Tambahan:
 - Kategori pengeluaran HARUS salah satu dari: ${EXPENSE_CATEGORIES.join(' | ')}
 - Kategori pemasukan HARUS salah satu dari: ${INCOME_CATEGORIES.join(' | ')}
 - Kualitas tidur (quality): "Sangat Baik" | "Baik" | "Cukup" | "Kurang"
-- "reply": Buat balasan konfirmasi santai, ramah, dan manusiawi dalam Bahasa Indonesia (misal: "Siap! Sudah aku catat jam tidur 8 jam ya, istirahat yang cukup bikin makin fokus!"). Kosongkan jika intent "chat".
+- "reply": Buat balasan konfirmasi santai, ramah, dan manusiawi dalam Bahasa Indonesia (misal: "Siap! Sudah aku catat 2 sesi tidur (total 9 jam) ya, istirahat yang cukup bikin makin fokus!"). Kosongkan jika intent "chat".
 
 Keluarkan HANYA JSON valid:
 {
@@ -381,6 +447,14 @@ Keluarkan HANYA JSON valid:
       "type": "sleep",
       "record_date": "YYYY-MM-DD",
       "duration_hours": number,
+      "sessions": [
+        {
+          "name": "string (misal: Tidur Siang, Tidur Malam)",
+          "startTime": "HH:MM",
+          "endTime": "HH:MM",
+          "duration": number
+        }
+      ] | null,
       "bedtime": "HH:MM" | null,
       "wake_time": "HH:MM" | null,
       "quality": "Sangat Baik" | "Baik" | "Cukup" | "Kurang",

@@ -1,5 +1,6 @@
 // FinDo Data Service (Supabase PostgreSQL Database)
 import { getSupabase } from './supabaseClient.js';
+import { parseSleepRecord, serializeSleepRecord } from './utils.js';
 
 // Helper generating standard RFC4122 v4 UUID
 const generateUUID = () => {
@@ -253,10 +254,11 @@ export const DataService = {
           .order('record_date', { ascending: true });
 
         if (!error && data) {
+          const parsedList = data.map(r => parseSleepRecord(r));
           try {
-            localStorage.setItem(`findo_sleep_${userId}_${prefix}`, JSON.stringify(data));
+            localStorage.setItem(`findo_sleep_${userId}_${prefix}`, JSON.stringify(parsedList));
           } catch (_) {}
-          return data;
+          return parsedList;
         }
       } catch (err) {
         console.warn("Supabase sleep_records fetch (fallback to local):", err.message);
@@ -266,18 +268,27 @@ export const DataService = {
     // Local fallback
     try {
       const stored = localStorage.getItem(`findo_sleep_${userId}_${prefix}`);
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const list = JSON.parse(stored);
+        return list.map(r => parseSleepRecord(r));
+      }
     } catch (_) {}
     return [];
   },
 
   async addSleepRecord(sleepData) {
     const supabase = getSupabase();
+    const serialized = serializeSleepRecord(sleepData);
     const payload = {
-      ...sleepData,
-      id: sleepData.id || generateUUID(),
-      duration_hours: Number(sleepData.duration_hours) || 0,
-      created_at: sleepData.created_at || new Date().toISOString(),
+      id: serialized.id || generateUUID(),
+      user_id: serialized.user_id,
+      record_date: serialized.record_date,
+      duration_hours: Number(serialized.duration_hours) || 0,
+      bedtime: serialized.bedtime || null,
+      wake_time: serialized.wake_time || null,
+      quality: serialized.quality || 'Baik',
+      notes: serialized.notes || null,
+      created_at: serialized.created_at || new Date().toISOString(),
     };
 
     if (supabase && payload.user_id) {
@@ -288,7 +299,18 @@ export const DataService = {
           .select();
 
         if (!error && data?.[0]) {
-          return data[0];
+          const result = parseSleepRecord(data[0]);
+          // Sync to local
+          try {
+            const prefix = (result.record_date || '').slice(0, 7);
+            const key = `findo_sleep_${payload.user_id}_${prefix}`;
+            const current = JSON.parse(localStorage.getItem(key) || '[]');
+            const filtered = current.filter(r => r.record_date !== result.record_date);
+            filtered.push(result);
+            filtered.sort((a, b) => (a.record_date || '').localeCompare(b.record_date || ''));
+            localStorage.setItem(key, JSON.stringify(filtered));
+          } catch (_) {}
+          return result;
         }
       } catch (err) {
         console.warn("Supabase sleep_records upsert (fallback to local):", err.message);
@@ -296,17 +318,18 @@ export const DataService = {
     }
 
     // Local fallback
+    const result = parseSleepRecord(serialized);
     try {
-      const prefix = (payload.record_date || new Date().toISOString().slice(0, 7)).slice(0, 7);
+      const prefix = (result.record_date || new Date().toISOString().slice(0, 7)).slice(0, 7);
       const key = `findo_sleep_${payload.user_id}_${prefix}`;
       const current = JSON.parse(localStorage.getItem(key) || '[]');
-      const filtered = current.filter(r => r.record_date !== payload.record_date);
-      filtered.push(payload);
+      const filtered = current.filter(r => r.record_date !== result.record_date);
+      filtered.push(result);
       filtered.sort((a, b) => (a.record_date || '').localeCompare(b.record_date || ''));
       localStorage.setItem(key, JSON.stringify(filtered));
     } catch (_) {}
 
-    return payload;
+    return result;
   },
 
   async deleteSleepRecord(id, userId, recordDate) {

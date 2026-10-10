@@ -164,13 +164,37 @@ export default function MonthlySleepCard({
                   >
                     {/* Tooltip on Hover */}
                     {isHovered && (
-                      <div className="absolute -top-14 z-30 bg-black text-white p-2 rounded text-[10px] font-mono whitespace-nowrap shadow-[3px_3px_0px_#FFE600] border border-white pointer-events-none">
-                        <p className="font-bold text-[#FFE600]">{formatShortDate(d.date)}</p>
-                        <p>
-                          {d.hasData
-                            ? `${d.duration} Jam (${d.quality || 'Baik'})${d.bedtime ? ` • ${d.bedtime?.slice(0, 5)} - ${d.wake_time?.slice(0, 5)}` : ''}`
-                            : 'Belum ada data'}
-                        </p>
+                      <div className="absolute -top-20 z-30 bg-black text-white p-2.5 rounded text-[10px] font-mono whitespace-nowrap shadow-[3px_3px_0px_#FFE600] border border-white pointer-events-none">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="font-bold text-[#FFE600]">{formatShortDate(d.date)}</p>
+                          {d.sessions && d.sessions.length > 1 && (
+                            <span className="neo-badge bg-[#8338EC] text-white text-[9px] py-0 px-1 font-bold">
+                              {d.sessions.length} SESI
+                            </span>
+                          )}
+                        </div>
+                        {d.hasData ? (
+                          <div className="mt-0.5 space-y-0.5">
+                            <p className="font-bold text-white">
+                              {d.duration} Jam ({d.quality || 'Baik'})
+                            </p>
+                            {d.sessions && d.sessions.length > 0 ? (
+                              <div className="text-zinc-300">
+                                {d.sessions.map((s, idx) => (
+                                  <p key={idx} className="text-[9px]">
+                                    • {s.name || `Sesi ${idx + 1}`}: {s.startTime?.slice(0, 5)} - {s.endTime?.slice(0, 5)} ({s.duration}h)
+                                  </p>
+                                ))}
+                              </div>
+                            ) : d.bedtime && d.wake_time ? (
+                              <p className="text-zinc-300 text-[9px]">
+                                • {d.bedtime?.slice(0, 5)} - {d.wake_time?.slice(0, 5)}
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <p className="text-zinc-400 mt-0.5">Belum ada data</p>
+                        )}
                       </div>
                     )}
 

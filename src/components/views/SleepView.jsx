@@ -22,7 +22,8 @@ import {
   formatIndonesianDate,
   formatShortDate,
   getTodayDateString,
-  calculateMonthlySleepStats
+  calculateMonthlySleepStats,
+  parseSleepRecord
 } from '../../lib/utils.js';
 
 export default function SleepView({
@@ -78,6 +79,7 @@ export default function SleepView({
 
   // Filter & sort records for table
   const sortedRecords = [...monthlySleepRecords]
+    .map(r => parseSleepRecord(r))
     .filter(r => r.record_date?.startsWith(activeMonth))
     .sort((a, b) => {
       if (sortOrder === 'desc') {
@@ -349,13 +351,37 @@ export default function SleepView({
                   >
                     {/* Tooltip on Hover */}
                     {isHovered && (
-                      <div className="absolute -top-16 z-30 bg-black text-white p-2 rounded text-[10px] font-mono whitespace-nowrap shadow-[3px_3px_0px_#FFE600] border border-white pointer-events-none">
-                        <p className="font-bold text-[#FFE600]">{formatShortDate(d.date)}</p>
-                        <p>
-                          {d.hasData
-                            ? `${d.duration} Jam (${d.quality || 'Baik'})${d.bedtime ? ` • ${d.bedtime?.slice(0, 5)} - ${d.wake_time?.slice(0, 5)}` : ''}`
-                            : 'Belum ada data (Klik untuk catat)'}
-                        </p>
+                      <div className="absolute -top-20 z-30 bg-black text-white p-2.5 rounded text-[10px] font-mono whitespace-nowrap shadow-[3px_3px_0px_#FFE600] border border-white pointer-events-none">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="font-bold text-[#FFE600]">{formatShortDate(d.date)}</p>
+                          {d.sessions && d.sessions.length > 1 && (
+                            <span className="neo-badge bg-[#8338EC] text-white text-[9px] py-0 px-1 font-bold">
+                              {d.sessions.length} SESI
+                            </span>
+                          )}
+                        </div>
+                        {d.hasData ? (
+                          <div className="mt-0.5 space-y-0.5">
+                            <p className="font-bold text-white">
+                              {d.duration} Jam ({d.quality || 'Baik'})
+                            </p>
+                            {d.sessions && d.sessions.length > 0 ? (
+                              <div className="text-zinc-300">
+                                {d.sessions.map((s, idx) => (
+                                  <p key={idx} className="text-[9px]">
+                                    • {s.name || `Sesi ${idx + 1}`}: {s.startTime?.slice(0, 5)} - {s.endTime?.slice(0, 5)} ({s.duration}h)
+                                  </p>
+                                ))}
+                              </div>
+                            ) : d.bedtime && d.wake_time ? (
+                              <p className="text-zinc-300 text-[9px]">
+                                • {d.bedtime?.slice(0, 5)} - {d.wake_time?.slice(0, 5)}
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <p className="text-zinc-400 mt-0.5">Belum ada data (Klik untuk catat)</p>
+                        )}
                       </div>
                     )}
 
@@ -465,9 +491,33 @@ export default function SleepView({
                       )}
                     </td>
 
-                    {/* Jam Mulai & Bangun */}
+                    {/* Jam Mulai & Bangun / Multi-Sesi */}
                     <td className="py-3 px-3 whitespace-nowrap text-zinc-600 dark:text-zinc-400">
-                      {record.bedtime && record.wake_time ? (
+                      {record.sessions && record.sessions.length > 0 ? (
+                        <div className="space-y-1">
+                          {record.sessions.length > 1 && (
+                            <span className="neo-badge bg-[#8338EC] text-white text-[9px] py-0 px-1.5 font-bold inline-block mb-0.5">
+                              {record.sessions.length} Sesi Terpisah
+                            </span>
+                          )}
+                          <div className="flex flex-col gap-0.5">
+                            {record.sessions.map((sess, idx) => (
+                              <div key={idx} className="flex items-center gap-1.5 text-[11px]">
+                                <Clock className="w-3 h-3 text-[#8338EC] shrink-0" />
+                                <span className="font-bold text-black dark:text-white">
+                                  {sess.name || `Sesi ${idx + 1}`}:
+                                </span>
+                                <span className="font-mono text-zinc-700 dark:text-zinc-300">
+                                  {sess.startTime?.slice(0, 5)} - {sess.endTime?.slice(0, 5)}
+                                </span>
+                                <span className="text-[10px] text-zinc-500 font-semibold">
+                                  ({sess.duration}h)
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : record.bedtime && record.wake_time ? (
                         <span className="flex items-center gap-1 font-bold">
                           <Clock className="w-3 h-3 text-zinc-400" />
                           {record.bedtime?.slice(0, 5)} - {record.wake_time?.slice(0, 5)}
@@ -484,10 +534,10 @@ export default function SleepView({
                       </span>
                     </td>
 
-                    {/* Catatan */}
+                    {/* Catatan (Bersih tanpa metadata) */}
                     <td className="py-3 px-3 text-zinc-700 dark:text-zinc-300 max-w-xs truncate">
-                      {record.notes ? (
-                        <span>{record.notes}</span>
+                      {record.cleanNotes || record.notes ? (
+                        <span>{record.cleanNotes || record.notes}</span>
                       ) : (
                         <span className="text-zinc-400 italic">-</span>
                       )}

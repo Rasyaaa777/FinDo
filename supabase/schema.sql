@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS financial_records (
 
 CREATE INDEX IF NOT EXISTS idx_finance_user_date ON financial_records (user_id, record_date);
 
--- 3. TABEL CATATAN JAM TIDUR
+-- 3. TABEL CATATAN JAM TIDUR (Mendukung Multi-Sesi: Tidur Siang + Tidur Malam)
 CREATE TABLE IF NOT EXISTS sleep_records (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid(),
@@ -40,9 +40,13 @@ CREATE TABLE IF NOT EXISTS sleep_records (
   wake_time TIME,
   quality VARCHAR(20) DEFAULT 'Baik',
   notes TEXT,
+  sessions JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   CONSTRAINT uq_sleep_user_date UNIQUE (user_id, record_date)
 );
+
+-- Migrasi untuk tabel yang sudah ada (jika kolom sessions belum ada):
+ALTER TABLE sleep_records ADD COLUMN IF NOT EXISTS sessions JSONB DEFAULT '[]'::jsonb;
 
 CREATE INDEX IF NOT EXISTS idx_sleep_user_date ON sleep_records (user_id, record_date);
 
